@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">WifiFileTranserfer</string>
+    <string name="create_hotspot">Create hotspot</string>
 </resources>
