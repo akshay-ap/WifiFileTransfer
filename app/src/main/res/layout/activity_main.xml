@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.examples.akshay.wififiletranserfer.MainActivity">
+    tools:context="com.examples.akshay.wififiletranserfer.activities.MainActivity">
 
     <TextView
         android:layout_width="wrap_content"
@@ -21,5 +21,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/create_hotspot" />
+
+    <Button
+        android:id="@+id/main_activity_button_connect_to_hotspot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/connect_to_hotspot" />
 
 </LinearLayout>
