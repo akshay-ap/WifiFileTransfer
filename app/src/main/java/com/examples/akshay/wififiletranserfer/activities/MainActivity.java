@@ -5,19 +5,27 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.examples.akshay.wififiletranserfer.Constants;
+import com.examples.akshay.wififiletranserfer.NSDHelper;
 import com.examples.akshay.wififiletranserfer.R;
+import com.examples.akshay.wififiletranserfer.ServerDetails;
+import com.examples.akshay.wififiletranserfer.Tasks.AcceptConnectionTask;
+import com.examples.akshay.wififiletranserfer.Tasks.ConnectTask;
+import com.examples.akshay.wififiletranserfer.interfaces.AcceptConnectionTaskUpdate;
+import com.examples.akshay.wififiletranserfer.interfaces.TaskUpdate;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -25,11 +33,21 @@ import java.util.List;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,TaskUpdate, AcceptConnectionTaskUpdate {
+
+    WifiManager wifiManager;
+    NSDHelper mNSDHelper;
 
     Button buttonCreateHotSpot;
     Button buttonConnectToHotSpot;
-    WifiManager wifiManager;
+    Button buttonTest1;
+    Button buttonTest2;
+    Button buttonTest3;
+    Button buttonTest4;
+
+    AcceptConnectionTask acceptConnectionTask;
+    ConnectTask connectTask;
+
     private static final String TAG = "===MainActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +56,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         setupUI();
         checkPermissions();
+        mNSDHelper = new NSDHelper(this,this);
+        mNSDHelper.initializeNsd();
+        acceptConnectionTask = new AcceptConnectionTask(this,this);
+        connectTask = new ConnectTask(this);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mNSDHelper != null) {
+            mNSDHelper.stopDiscovery();
+        }
+        logd("onPause");
+    }
+
+    @Override
+    protected void onDestroy() {
+        mNSDHelper.tearDown();
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        logd("onResume");
 
     }
 
@@ -52,17 +95,65 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.main_activity_button_connect_to_hotspot:
                 Log.d(MainActivity.TAG,"main_activity_button_connect_to_hotspot CLICK");
                 connectToHotSpot();
+                break;
+            case R.id.main_activity_button_test1:
+                Log.d(MainActivity.TAG,"main_activity_button_test1 CLICK");
+                if (mNSDHelper.isDiscovering()) {
+                    mNSDHelper.stopDiscovery();
+                } else {
+                    makeToast("Not discovering");
+                }
+                break;
+            case R.id.main_activity_button_test2:
+                Log.d(MainActivity.TAG,"main_activity_button_test2 CLICK");
+                if(!mNSDHelper.isDiscovering()) {
+                    logd("trying to start discovery");
+                    mNSDHelper.discoverServices();
+                } else {
+                    logd("already discovering");
+                    makeToast("Already discovering");
+                }
+                break;
+            case R.id.main_activity_button_test3:
+                if(!(acceptConnectionTask.getStatus() == AsyncTask.Status.RUNNING)) {
+                    acceptConnectionTask.execute();
+                } else {
+                    logd("acceptConnectionTaskAlready running");
+                }
+                break;
+            case R.id.main_activity_button_test4:
+                if(!(connectTask.getStatus() == AsyncTask.Status.RUNNING)) {
+                    connectTask.execute();
+                } else {
+                    logd("connectTask running");
+                }
+                break;
             default:
+                makeToast("Yet to do...");
                 break;
         }
     }
 
     private void setupUI() {
+
         buttonCreateHotSpot = findViewById(R.id.main_activity_button_create_hotspot);
         buttonCreateHotSpot.setOnClickListener(this);
 
         buttonConnectToHotSpot = findViewById(R.id.main_activity_button_connect_to_hotspot);
         buttonConnectToHotSpot.setOnClickListener(this);
+
+        buttonTest1 = findViewById(R.id.main_activity_button_test1);
+        buttonTest1.setOnClickListener(this);
+
+        buttonTest2 = findViewById(R.id.main_activity_button_test2);
+        buttonTest2.setOnClickListener(this);
+
+        buttonTest3 = findViewById(R.id.main_activity_button_test3);
+        buttonTest3.setOnClickListener(this);
+
+        buttonTest4 = findViewById(R.id.main_activity_button_test4);
+        buttonTest4.setOnClickListener(this);
+
     }
 
     private void createHotSpot() {
@@ -74,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         netConfig.SSID = Constants.SSID;
-        netConfig.preSharedKey = Constants.PASSWORD;
+        //netConfig.preSharedKey = Constants.PASSWORD;
         netConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
 
 
@@ -104,12 +195,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             WifiConfiguration wifiConfiguration = new WifiConfiguration();
-            wifiConfiguration.SSID = "\"" +Constants.SSID + "\"";  // This string should have double quotes included while adding.
-            wifiConfiguration.preSharedKey = Constants.PASSWORD;
+            wifiConfiguration.SSID = "\"" +Constants.SSID + "\"";
             wifiConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
 
-//Add the created wifi configuration to device
-            int netId = wifiManager.addNetwork(wifiConfiguration);  //Adds to the list of network and returns the network id which can be used to enable it later.
+            int netId = wifiManager.addNetwork(wifiConfiguration);
             wifiManager.disconnect();
             List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
             for( WifiConfiguration i : list ) {
@@ -130,11 +219,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void checkPermissions() {
-        // Here, thisActivity is the current activity
+
 
         boolean read = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PERMISSION_GRANTED;
         boolean write = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PERMISSION_GRANTED;
-        //boolean settings = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_SETTINGS) == PERMISSION_GRANTED;
         boolean settings = false;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             settings = Settings.System.canWrite(getApplication());
@@ -194,10 +282,66 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 buttonConnectToHotSpot.setEnabled(false);
                 buttonCreateHotSpot.setEnabled(false);
             }
-
         }
     }
 
 
+    private void logd(String tolog) {
+        Log.d(MainActivity.TAG,tolog);
+    }
 
+    private void makeToast(String x) {
+        if (x == null) {
+            x = "null";
+        }
+        Toast.makeText(getApplicationContext(),x,Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void TaskCompleted(String message) {
+
+    }
+
+    @Override
+    public void TaskStarted() {
+
+    }
+
+    @Override
+    public void TaskProgressPublish(String Update) {
+
+    }
+
+    @Override
+    public void TaskError(String e) {
+
+    }
+
+    @Override
+    public void TaskData() {
+        makeToast(ServerDetails.IP +" "+ ServerDetails.PORT);
+    }
+
+    @Override
+    public void SetIP(String ip) {
+        ServerDetails.IP = ip;
+    }
+
+    @Override
+    public void SetPORT(int port) {
+        ServerDetails.PORT = port;
+    }
+
+    @Override
+    public void Ready() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                makeToast("Ready to accept connection");
+                mNSDHelper.registerService(ServerDetails.PORT,ServerDetails.IP);
+
+            }
+        });
+
+    }
 }

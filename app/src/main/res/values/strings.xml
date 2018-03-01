@@ -2,4 +2,8 @@
     <string name="app_name">WifiFileTranserfer</string>
     <string name="create_hotspot">Create hotspot</string>
     <string name="connect_to_hotspot">Connect</string>
+    <string name="test_1">test_1</string>
+    <string name="test_2">test_2</string>
+    <string name="test_3">test 3</string>
+    <string name="test_4">test 4</string>
 </resources>
