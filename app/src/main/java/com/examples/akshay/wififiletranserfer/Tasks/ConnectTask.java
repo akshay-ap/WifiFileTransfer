@@ -4,6 +4,11 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.examples.akshay.wififiletranserfer.ServerDetails;
+
+import java.io.IOException;
+import java.net.Socket;
+
 
 /**
  * Created by ash on 20/2/18.
@@ -12,6 +17,7 @@ import android.util.Log;
 
 public class ConnectTask extends AsyncTask {
     private static final String TAG = "===ConnectTask";
+    Socket mSocket;
 
     private Context context;
     public ConnectTask(Context context) {
@@ -20,7 +26,20 @@ public class ConnectTask extends AsyncTask {
 
 
     @Override
-    protected Object doInBackground(Object[] objects) {
+    protected Object doInBackground(Object[] objects)
+    {
+
+        try {
+            logd("Creating socket object");
+            mSocket = new Socket(ServerDetails.IP,ServerDetails.PORT);
+            logd("Socket object created");
+        } catch (IOException e) {
+            logd("exception " + e.toString());
+            e.printStackTrace();
+        } catch (Exception e) {
+            logd("exception " + e.toString());
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -33,6 +52,9 @@ public class ConnectTask extends AsyncTask {
 
     // Closes the client socket and causes the thread to finish.
     public void cancel() {
+    }
+    private void logd(String log) {
+        Log.d(ConnectTask.TAG,log);
     }
 
 }

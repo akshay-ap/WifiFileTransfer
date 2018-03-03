@@ -11,5 +11,5 @@ public interface TaskUpdate {
     void TaskStarted();
     void TaskProgressPublish(String Update);
     void TaskError(String e);
-    void TaskData();
+    void TaskData(String ip, int port);
 }

@@ -10,4 +10,5 @@ public class ServerDetails {
     public static int PORT;
     public static String IP;
 
+
 }

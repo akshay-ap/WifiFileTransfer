@@ -1,8 +1,10 @@
 package com.examples.akshay.wififiletranserfer.activities;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -47,7 +49,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     AcceptConnectionTask acceptConnectionTask;
     ConnectTask connectTask;
-
+    BroadcastReceiver mReceiver;
+    IntentFilter mIntentFilter;
     private static final String TAG = "===MainActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,14 +64,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         acceptConnectionTask = new AcceptConnectionTask(this,this);
         connectTask = new ConnectTask(this);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+        mReceiver = getBroadCastRecevier();
+        mIntentFilter = new IntentFilter("android.net.wifi.WIFI_AP_STATE_CHANGED");
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mNSDHelper != null) {
+        if (mNSDHelper != null && mNSDHelper.isDiscovering()) {
             mNSDHelper.stopDiscovery();
         }
+        unregisterReceiver(mReceiver);
         logd("onPause");
     }
 
@@ -81,6 +89,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
+        registerReceiver(mReceiver, mIntentFilter);
+
         logd("onResume");
 
     }
@@ -98,11 +108,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.main_activity_button_test1:
                 Log.d(MainActivity.TAG,"main_activity_button_test1 CLICK");
-                if (mNSDHelper.isDiscovering()) {
-                    mNSDHelper.stopDiscovery();
-                } else {
-                    makeToast("Not discovering");
-                }
+                    //mNSDHelper.registerService(ServerDetails.PORT,ServerDetails.IP);
                 break;
             case R.id.main_activity_button_test2:
                 Log.d(MainActivity.TAG,"main_activity_button_test2 CLICK");
@@ -144,6 +150,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         buttonTest1 = findViewById(R.id.main_activity_button_test1);
         buttonTest1.setOnClickListener(this);
+        buttonTest1.setEnabled(false);
 
         buttonTest2 = findViewById(R.id.main_activity_button_test2);
         buttonTest2.setOnClickListener(this);
@@ -318,8 +325,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void TaskData() {
-        makeToast(ServerDetails.IP +" "+ ServerDetails.PORT);
+    public void TaskData(String ip, int PORT) {
+        makeToast(ip+" "+ PORT);
+        ServerDetails.IP = ip;
+        ServerDetails.PORT = PORT;
+
     }
 
     @Override
@@ -343,5 +353,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+    }
+
+    private BroadcastReceiver getBroadCastRecevier() {
+
+        return new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if ("android.net.wifi.WIFI_AP_STATE_CHANGED".equals(action)) {
+
+                    // get Wi-Fi Hotspot state here
+                    int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 0);
+
+                    if (WifiManager.WIFI_STATE_ENABLED == state % 10) {
+                        // Wifi is enabled
+                        logd("Wifi enabled");
+                        makeToast("Wifi enabled");
+                    } else  {
+                        makeToast("Wifi disabled");
+                        logd("Wifi enabled");
+
+                    }
+
+                }
+            }
+        };
     }
 }

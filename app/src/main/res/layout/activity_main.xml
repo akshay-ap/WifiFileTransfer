@@ -32,24 +32,24 @@
         android:id="@+id/main_activity_button_test1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/test_1" />
+        android:text="@string/register_service" />
 
     <Button
         android:id="@+id/main_activity_button_test2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/test_2" />
+        android:text="@string/start_discovery" />
 
     <Button
         android:id="@+id/main_activity_button_test3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/test_3" />
+        android:text="@string/server_socket" />
 
     <Button
         android:id="@+id/main_activity_button_test4"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/test_4" />
+        android:text="@string/connect_to_server" />
 
 </LinearLayout>
