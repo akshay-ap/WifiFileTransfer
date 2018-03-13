@@ -60,7 +60,7 @@ public class NSDHelper {
                     {
                     logd("Found service : "+ service.getServiceName());
                     makeToast("Found service :" + service.getServiceName());
-                    mNsdManager.resolveService(service, mResolveListener);
+                    //mNsdManager.resolveService(service, mResolveListener);
                 }
             }
 

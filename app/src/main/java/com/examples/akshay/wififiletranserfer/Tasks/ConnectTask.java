@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.examples.akshay.wififiletranserfer.ServerDetails;
+import com.examples.akshay.wififiletranserfer.interfaces.AcceptConnectionTaskUpdate;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -18,10 +19,11 @@ import java.net.Socket;
 public class ConnectTask extends AsyncTask {
     private static final String TAG = "===ConnectTask";
     Socket mSocket;
-
+    AcceptConnectionTaskUpdate acceptConnectionTaskUpdate;
     private Context context;
-    public ConnectTask(Context context) {
+    public ConnectTask(Context context,AcceptConnectionTaskUpdate acceptConnectionTask) {
         this.context = context;
+        this.acceptConnectionTaskUpdate = acceptConnectionTaskUpdate;
     }
 
 
@@ -32,6 +34,7 @@ public class ConnectTask extends AsyncTask {
         try {
             logd("Creating socket object");
             mSocket = new Socket(ServerDetails.IP,ServerDetails.PORT);
+            acceptConnectionTaskUpdate.StartDataTransfer();
             logd("Socket object created");
         } catch (IOException e) {
             logd("exception " + e.toString());

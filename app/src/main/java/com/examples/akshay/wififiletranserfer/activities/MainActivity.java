@@ -8,8 +8,8 @@ import android.content.IntentFilter;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     Button buttonCreateHotSpot;
     Button buttonConnectToHotSpot;
-    Button buttonTest1;
     Button buttonTest2;
     Button buttonTest3;
     Button buttonTest4;
@@ -62,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mNSDHelper = new NSDHelper(this,this);
         mNSDHelper.initializeNsd();
         acceptConnectionTask = new AcceptConnectionTask(this,this);
-        connectTask = new ConnectTask(this);
+        connectTask = new ConnectTask(this,this);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         mReceiver = getBroadCastRecevier();
@@ -147,10 +146,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         buttonConnectToHotSpot = findViewById(R.id.main_activity_button_connect_to_hotspot);
         buttonConnectToHotSpot.setOnClickListener(this);
-
-        buttonTest1 = findViewById(R.id.main_activity_button_test1);
-        buttonTest1.setOnClickListener(this);
-        buttonTest1.setEnabled(false);
 
         buttonTest2 = findViewById(R.id.main_activity_button_test2);
         buttonTest2.setOnClickListener(this);
@@ -353,6 +348,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+    }
+
+    @Override
+    public void StartDataTransfer() {
+        Intent intent = new Intent(this, DataTransfer.class);
+        startActivity(intent);
     }
 
     private BroadcastReceiver getBroadCastRecevier() {

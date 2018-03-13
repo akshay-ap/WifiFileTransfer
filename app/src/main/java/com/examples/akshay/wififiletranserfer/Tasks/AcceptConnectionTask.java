@@ -29,8 +29,6 @@ public class AcceptConnectionTask extends AsyncTask {
     public AcceptConnectionTask(Context context,AcceptConnectionTaskUpdate acceptConnectionTaskUpdate) {
         this.context = context;
         this.acceptConnectionTaskUpdate = acceptConnectionTaskUpdate;
-        BluetoothServerSocket tmp = null;
-
     }
 
     public void cancel() {
@@ -61,7 +59,7 @@ public class AcceptConnectionTask extends AsyncTask {
             logd("trying to accept connection");
             Socket client = serverSocket.accept();
             SocketHolder.socket = client;
-
+            acceptConnectionTaskUpdate.StartDataTransfer();
             logd("Accepted connection");
 
         } catch (IOException e) {

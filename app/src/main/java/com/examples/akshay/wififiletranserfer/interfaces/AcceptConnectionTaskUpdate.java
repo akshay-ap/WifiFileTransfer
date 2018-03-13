@@ -10,5 +10,5 @@ public interface AcceptConnectionTaskUpdate {
     void SetIP(String ip);
     void SetPORT(int port);
     void Ready();
-
+    void StartDataTransfer();
 }
