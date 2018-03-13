@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.examples.akshay.wififiletranserfer.ConnectionDetails;
 import com.examples.akshay.wififiletranserfer.Constants;
+import com.examples.akshay.wififiletranserfer.HotSpotManager;
 import com.examples.akshay.wififiletranserfer.NSDHelper;
 import com.examples.akshay.wififiletranserfer.R;
 import com.examples.akshay.wififiletranserfer.ServerDetails;
@@ -53,11 +54,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     WifiManager wifiManager;
     //NSDHelper mNSDHelper;
 
-    Button buttonCreateHotSpot;
+/*    Button buttonCreateHotSpot;
     Button buttonConnectToHotSpot;
     Button buttonTest2;
     Button buttonTest3;
-    Button buttonTest4;
+    Button buttonTest4;*/
+
+    HotSpotManager hotSpotManager;
     Button buttonScanQRCode;
     Button buttonGenerateQRCode;
 
@@ -78,6 +81,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         acceptConnectionTask = new AcceptConnectionTask(this,this);
         connectTask = new ConnectTask(this,this);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+        hotSpotManager = new HotSpotManager(wifiManager);
 
         mReceiver = getBroadCastRecevier();
         mIntentFilter = new IntentFilter("android.net.wifi.WIFI_AP_STATE_CHANGED");
@@ -112,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.main_activity_button_create_hotspot:
+            /*case R.id.main_activity_button_create_hotspot:
                 Log.d(MainActivity.TAG,"main_activity_button_create_hotspot CLICK");
                 createHotSpot();
                 break;
@@ -126,13 +131,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.main_activity_button_test2:
                 Log.d(MainActivity.TAG,"main_activity_button_test2 CLICK");
-             /*   if(!mNSDHelper.isDiscovering()) {
+             *//*   if(!mNSDHelper.isDiscovering()) {
                     logd("trying to start discovery");
                     mNSDHelper.discoverServices();
                 } else {
                     logd("already discovering");
                     makeToast("Already discovering");
-                }*/
+                }*//*
                 break;
             case R.id.main_activity_button_test3:
                 if(!(acceptConnectionTask.getStatus() == AsyncTask.Status.RUNNING)) {
@@ -147,18 +152,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     logd("connectTask running");
                 }
-                break;
+                break;*/
             case  R.id.main_activity_button_scan_qrcode:
                 IntentIntegrator intentIntegrator= new IntentIntegrator(this);
                 intentIntegrator.setOrientationLocked(true);
                 intentIntegrator.initiateScan();
                 break;
             case R.id.main_activity_button_generate_qrcode:
+
+                Log.d(MainActivity.TAG,"main_activity_button_create_hotspot CLICK");
+
+                ConnectionDetails connectionDetails = hotSpotManager.createHotSpot();
+
                 Intent intentShowQRCode = new Intent(this, ShowQRCode.class);
-                intentShowQRCode.putExtra(Constants.KEY_SSID,Constants.SSID);
-                intentShowQRCode.putExtra(Constants.KEY_PASSWORD,Constants.PASSWORD);
-                intentShowQRCode.putExtra(Constants.KEY_SERVER_PORT,Constants.SERVER_PORT);
-                intentShowQRCode.putExtra(Constants.KEY_IP,Constants.KEY_IP);
+                intentShowQRCode.putExtra(Constants.KEY_SSID,connectionDetails.getSsid());
+                intentShowQRCode.putExtra(Constants.KEY_PASSWORD,connectionDetails.getPassword());
+                intentShowQRCode.putExtra(Constants.KEY_SERVER_PORT,connectionDetails.getPort());
+                intentShowQRCode.putExtra(Constants.KEY_IP,connectionDetails.getIp());
 
                 startActivity(intentShowQRCode);
                 break;
@@ -170,7 +180,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void setupUI() {
 
-        buttonCreateHotSpot = findViewById(R.id.main_activity_button_create_hotspot);
+/*        buttonCreateHotSpot = findViewById(R.id.main_activity_button_create_hotspot);
         buttonCreateHotSpot.setOnClickListener(this);
 
         buttonConnectToHotSpot = findViewById(R.id.main_activity_button_connect_to_hotspot);
@@ -183,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         buttonTest3.setOnClickListener(this);
 
         buttonTest4 = findViewById(R.id.main_activity_button_test4);
-        buttonTest4.setOnClickListener(this);
+        buttonTest4.setOnClickListener(this);*/
 
         buttonScanQRCode = findViewById(R.id.main_activity_button_scan_qrcode);
         buttonScanQRCode.setOnClickListener(this);
@@ -226,67 +236,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return  connectionDetails;
     }
 
-    private void createHotSpot() {
-        WifiConfiguration netConfig = new WifiConfiguration();
-
-        if(wifiManager.isWifiEnabled())
-        {
-            wifiManager.setWifiEnabled(false);
-        }
-
-        netConfig.SSID = Constants.SSID;
-        //netConfig.preSharedKey = Constants.PASSWORD;
-        netConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
 
 
-        try{
-            Method setWifiApMethod = wifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
-            boolean apstatus=(Boolean) setWifiApMethod.invoke(wifiManager, netConfig,true);
 
-            Method isWifiApEnabledmethod = wifiManager.getClass().getMethod("isWifiApEnabled");
-            while(!(Boolean)isWifiApEnabledmethod.invoke(wifiManager)){};
-            Method getWifiApStateMethod = wifiManager.getClass().getMethod("getWifiApState");
-            int apstate=(Integer)getWifiApStateMethod.invoke(wifiManager);
-            Method getWifiApConfigurationMethod = wifiManager.getClass().getMethod("getWifiApConfiguration");
-            netConfig=(WifiConfiguration)getWifiApConfigurationMethod.invoke(wifiManager);
-            Log.d("CLIENT", "\nSSID:"+netConfig.SSID+"\nPassword:"+netConfig.preSharedKey+"\n");
-
-        } catch (Exception e) {
-            Log.d(this.getClass().toString(), "", e);
-        }
-    }
-
-    private void connectToHotSpot() {
-
-        try {
-            if(!wifiManager.isWifiEnabled())
-            {
-                wifiManager.setWifiEnabled(true);
-            }
-
-            WifiConfiguration wifiConfiguration = new WifiConfiguration();
-            wifiConfiguration.SSID = "\"" +Constants.SSID + "\"";
-            wifiConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-
-            int netId = wifiManager.addNetwork(wifiConfiguration);
-            wifiManager.disconnect();
-            List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
-            for( WifiConfiguration i : list ) {
-                if(i.SSID != null && i.SSID.equals("\"" + Constants.SSID + "\"")) {
-                    wifiManager.disconnect();
-                    wifiManager.enableNetwork(i.networkId, true);
-                    wifiManager.reconnect();
-
-                    break;
-                }
-            }
-        }catch (Exception e) {
-            e.printStackTrace();
-            Log.d(MainActivity.TAG,e.toString());
-            Toast.makeText(getApplicationContext(),"Exception :" + e.toString(),Toast.LENGTH_LONG).show();
-        }
-
-    }
 
     public void checkPermissions() {
 
@@ -329,8 +281,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
 
-        buttonConnectToHotSpot.setEnabled(true);
-        buttonCreateHotSpot.setEnabled(true );
+        //buttonConnectToHotSpot.setEnabled(true);
+        //buttonCreateHotSpot.setEnabled(true );
     }
 
     @Override
@@ -344,13 +296,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             if(all == grantResults.length) {
-                buttonConnectToHotSpot.setEnabled(true);
-                buttonCreateHotSpot.setEnabled(true);
+                //buttonConnectToHotSpot.setEnabled(true);
+               // buttonCreateHotSpot.setEnabled(true);
                 Log.d(MainActivity.TAG,"All permissions granted");
             } else {
                 Log.d(MainActivity.TAG,"permissions denied : " + (grantResults.length-all));
-                buttonConnectToHotSpot.setEnabled(false);
-                buttonCreateHotSpot.setEnabled(false);
+                //buttonConnectToHotSpot.setEnabled(false);
+               // buttonCreateHotSpot.setEnabled(false);
             }
         }
     }
