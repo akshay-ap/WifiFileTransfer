@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Handler mHandler;
     AcceptConnectionTask acceptConnectionTask;
     ConnectTask connectTask;
+    Button buttonConnect;
     BroadcastReceiver mReceiver;
     IntentFilter mIntentFilter;
     private static final String TAG = "===MainActivity";
@@ -166,6 +167,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 hotspotCreationThread.start();
                 break;
+
+            case R.id.main_activity_button_connect:
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        makeToast("Starting socket connection");
+                        if(connectTask.getStatus() == AsyncTask.Status.RUNNING || connectTask.getStatus() == AsyncTask.Status.FINISHED) {
+                            connectTask.cancel();
+                            connectTask = null;
+                            connectTask = new ConnectTask(MainActivity.this,MainActivity.this);
+                        }
+                        connectTask.execute();
+                    }
+                }, 3000);
+                break;
             default:
                 makeToast("Yet to do...");
                 break;
@@ -179,6 +195,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         buttonGenerateQRCode = findViewById(R.id.main_activity_button_generate_qrcode);
         buttonGenerateQRCode.setOnClickListener(this);
+
+        buttonConnect = findViewById(R.id.main_activity_button_connect);
+        buttonConnect.setOnClickListener(this);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Creating hotspot");
@@ -399,12 +418,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     case Constants.WIFI_CONNECTION_SUCCESS:
                         logd("Connected to hotspot");
 
-                        if(connectTask.getStatus() == AsyncTask.Status.RUNNING) {
-                            connectTask.cancel();
-                            connectTask = null;
-                            connectTask = new ConnectTask(MainActivity.this,MainActivity.this);
-                        }
-                        connectTask.execute();
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                makeToast("Initiating socket connection");
+                                if(connectTask.getStatus() == AsyncTask.Status.RUNNING || connectTask.getStatus() == AsyncTask.Status.FINISHED) {
+                                    connectTask.cancel();
+                                    connectTask = null;
+                                    connectTask = new ConnectTask(MainActivity.this,MainActivity.this);
+                                }
+                                connectTask.execute();
+                            }
+                        }, 3000);
 
                         break;
                     case Constants.WIFI_CONNECTION_FAILURE:

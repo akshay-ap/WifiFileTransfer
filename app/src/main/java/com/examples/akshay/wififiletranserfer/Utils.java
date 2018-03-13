@@ -32,6 +32,12 @@ public class Utils {
             for (NetworkInterface intf : interfaces) {
                 List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
                 for (InetAddress addr : addrs) {
+                    String sAddr = addr.getHostAddress();
+
+                    logd("======== "+sAddr);
+                }
+
+                for (InetAddress addr : addrs) {
                     if (!addr.isLoopbackAddress()) {
                         String sAddr = addr.getHostAddress();
                         //boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
@@ -90,8 +96,6 @@ public class Utils {
             e.printStackTrace();
         }
     }
-
-
 
     public static void reverse(byte[] array) {
         if (array == null) {

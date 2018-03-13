@@ -23,7 +23,7 @@ public class ConnectTask extends AsyncTask {
     private Context context;
     public ConnectTask(Context context,AcceptConnectionTaskUpdate acceptConnectionTask) {
         this.context = context;
-        this.acceptConnectionTaskUpdate = acceptConnectionTaskUpdate;
+        this.acceptConnectionTaskUpdate = acceptConnectionTask;
     }
 
 
@@ -31,11 +31,14 @@ public class ConnectTask extends AsyncTask {
     protected Object doInBackground(Object[] objects)
     {
         ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
+
+
+
         String ip = connectionDetails.getIp();
         int port = connectionDetails.getPort();
 
         try {
-            logd("Creating socket object");
+            logd("Creating socket object with IP: " + ip + " PORT : " + port);
             mSocket = new Socket(ip,port);
             acceptConnectionTaskUpdate.StartDataTransfer();
             logd("Socket object created");

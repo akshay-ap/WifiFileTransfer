@@ -18,4 +18,5 @@
     <string name="nsd">NSD</string>
     <string name="method_1">Method 1</string>
     <string name="method_2">Method 2</string>
+    <string name="connect">Connect</string>
 </resources>

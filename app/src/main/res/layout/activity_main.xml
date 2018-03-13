@@ -23,7 +23,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/lead_device" />
-    
+
+    <Button
+        android:id="@+id/main_activity_button_connect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/connect" />
+
     <Space
         android:layout_width="match_parent"
         android:layout_height="20dp" />
