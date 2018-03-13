@@ -1,15 +1,20 @@
 package com.examples.akshay.wififiletranserfer.activities;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.examples.akshay.wififiletranserfer.Constants;
+import com.examples.akshay.wififiletranserfer.HotSpotManager;
 import com.examples.akshay.wififiletranserfer.R;
 import com.examples.akshay.wififiletranserfer.Utils;
 import com.google.zxing.WriterException;
@@ -19,17 +24,20 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Iterator;
 
 public class ShowQRCode extends AppCompatActivity {
 
     private final static String TAG = "===ShowQRCode";
     ImageView imageViewShowQRCode;
+    TextView textViewConnectionInfo;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_qrcode);
         setupUI();
+
         try {
 
             Bundle extras = getIntent().getExtras();
@@ -43,7 +51,10 @@ public class ShowQRCode extends AppCompatActivity {
             int PORT = extras.getInt(Constants.KEY_SERVER_PORT,-1);
             logd(SSID + " " + PASSWORD + " " + IP + " " + PORT);
 
-            if (SSID != null && PASSWORD != null && IP != null && PORT != -1 ) {
+            textViewConnectionInfo.setText(String.format("SSID : %s\nPASSWORD : %s\nIP : %s\nPORT : %d", SSID, PASSWORD, IP, PORT));
+
+
+            if (SSID != null && PASSWORD != null && !IP.equals("") && IP != null && PORT != -1 ) {
                 makeToast("Valid data received");
                 String qrString = bulidString(IP,SSID,PASSWORD,PORT);
 
@@ -59,7 +70,8 @@ public class ShowQRCode extends AppCompatActivity {
                 imageViewShowQRCode.setImageBitmap(bmp);
 
             } else {
-                makeToast("Invalid data received");
+                makeToast("Something went wrong..try again");
+                finish();
             }
 
 
@@ -75,9 +87,21 @@ public class ShowQRCode extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(HotSpotManager.isApOn(this)) {
+            HotSpotManager.configApState(this);
+        }
+    }
+
+
     private void setupUI() {
         imageViewShowQRCode = findViewById(R.id.activity_show_qrcode_imageView_show_qrcode);
+
+        textViewConnectionInfo = findViewById(R.id.activity_show_qrcode_textView_data);
     }
+
 
     private void logd(String logMessage) {
         if(logMessage == null) logMessage = "Null";

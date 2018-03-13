@@ -28,6 +28,7 @@ import com.examples.akshay.wififiletranserfer.HotSpotManager;
 import com.examples.akshay.wififiletranserfer.R;
 import com.examples.akshay.wififiletranserfer.Tasks.AcceptConnectionTask;
 import com.examples.akshay.wififiletranserfer.Tasks.ConnectTask;
+import com.examples.akshay.wififiletranserfer.Utils;
 import com.examples.akshay.wififiletranserfer.interfaces.AcceptConnectionTaskUpdate;
 import com.examples.akshay.wififiletranserfer.interfaces.TaskUpdate;
 import com.google.zxing.integration.android.IntentIntegrator;
@@ -89,16 +90,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         //mNSDHelper.tearDown();
         super.onDestroy();
+        if(HotSpotManager.isApOn(this)) {
+            HotSpotManager.configApState(this);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         registerReceiver(mReceiver, mIntentFilter);
-
         logd("onResume");
 
     }
+
 
     @Override
     public void onClick(View view) {
@@ -140,6 +144,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;*/
             case  R.id.main_activity_button_scan_qrcode:
+
+                if(HotSpotManager.isApOn(this)) {
+                    HotSpotManager.configApState(this);
+                }
+
                 IntentIntegrator intentIntegrator= new IntentIntegrator(this);
                 intentIntegrator.setOrientationLocked(true);
                 intentIntegrator.setBeepEnabled(false);
@@ -190,12 +199,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
         if(result != null) {
             if(result.getContents() == null) {
-                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
+                makeToast("Cancelled");
             } else {
-                Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+                makeToast( "Scanned: " + result.getContents());
                 logd(result.getContents());
 
-                parseString(result.getContents());
+                Utils.parseString(result.getContents());
                 ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
                 logd( "Parsed contents : " + connectionDetails.getIp() + " " + connectionDetails.getSsid() + " " + connectionDetails.getPassword() + " " + connectionDetails.getPort());
 
@@ -204,7 +213,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     hotSpotManager.connectToHotSpot();
 
                 } else {
-                    makeToast("Invalid data recevied...");
+                    makeToast("Invalid data received...");
                     logd("QRCode scan returned invalid data");
                 }
             }
@@ -213,19 +222,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void parseString(String qrString) {
-
-        ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
-        try {
-            JSONObject jsonObject = new JSONObject(qrString);
-            connectionDetails.setIp(jsonObject.getString(Constants.KEY_IP));
-            connectionDetails.setPassword(jsonObject.getString(Constants.KEY_PASSWORD));
-            connectionDetails.setPort(jsonObject.getInt(Constants.KEY_SERVER_PORT));
-            connectionDetails.setSsid(jsonObject.getString(Constants.KEY_SSID));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
 
     public void checkPermissions() {
 
@@ -399,7 +395,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             acceptConnectionTask = new AcceptConnectionTask(MainActivity.this,MainActivity.this);
                         }
                         acceptConnectionTask.execute();
+                        break;
+                    case Constants.WIFI_CONNECTION_SUCCESS:
+                        logd("Connected to hotspot");
 
+                        if(connectTask.getStatus() == AsyncTask.Status.RUNNING) {
+                            connectTask.cancel();
+                            connectTask = null;
+                            connectTask = new ConnectTask(MainActivity.this,MainActivity.this);
+                        }
+                        connectTask.execute();
+
+                        break;
+                    case Constants.WIFI_CONNECTION_FAILURE:
+                        logd("Connection to hotspot failed");
+                        makeToast("Try again..connection attempt failed");
                         break;
                     default:
                         makeToast("Unhandled message" + status);

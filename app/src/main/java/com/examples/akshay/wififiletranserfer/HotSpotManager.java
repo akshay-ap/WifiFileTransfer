@@ -2,13 +2,16 @@ package com.examples.akshay.wififiletranserfer;
 
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.Message;
+import android.text.format.Formatter;
 import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
 import java.util.List;
 
 
@@ -25,6 +28,11 @@ public class HotSpotManager {
         this.mHandler = mHandler;
     }
     public void createHotSpot() {
+
+        if(HotSpotManager.isApOn(context)) {
+            HotSpotManager.configApState(context);
+        }
+
         o = new Message();
         o.obj = Constants.HOTSPOT_CREATION_STARTED;
         mHandler.sendMessage(o);
@@ -59,6 +67,15 @@ public class HotSpotManager {
                                     apstate=(Integer)method1.invoke(wifiManager);
                                 }
                             }
+
+                            logd("======= "+Utils.getIPAddress(true));
+                           /* WifiInfo wifiinfo = wifiManager.getConnectionInfo();
+                            byte[] myIPAddress = BigInteger.valueOf(wifiinfo.getIpAddress()).toByteArray();
+// you must reverse the byte array before conversion. Use Apache's commons library
+                            Utils.reverse(myIPAddress);
+                            InetAddress myInetIP = InetAddress.getByAddress(myIPAddress);
+                            String myIP = myInetIP.getHostAddress();
+                            logd("=============== "+ myIP);*/
                         }
                     }
                     if(apstatus) {
@@ -79,19 +96,28 @@ public class HotSpotManager {
                     e.printStackTrace();
                 } catch (InvocationTargetException e) {
                     e.printStackTrace();
-                }
+                } /*catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }*/
             }
         }
     }
 
     public void connectToHotSpot() {
+
+        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+
+        if(!wifiManager.isWifiEnabled())
+        {
+            wifiManager.setWifiEnabled(true);
+        }
+
         WifiConfiguration conf = new WifiConfiguration();
         ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
         String ssid = "\"" +connectionDetails.getSsid()+"\"";
         conf.SSID = ssid;
         conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
         wifiManager.addNetwork(conf);
-
         List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
         if(list == null ) {
             logd("list is null");
@@ -108,47 +134,59 @@ public class HotSpotManager {
                     wifiManager.enableNetwork(i.networkId, true);
                     logd("i.networkId " + i.networkId + "\n");
                     wifiManager.reconnect();
+                    Message o = new Message();
+                    o.obj = Constants.WIFI_CONNECTION_SUCCESS;
+                    mHandler.sendMessage(o);
                     //hotspotUpdate.connectedToHotspot();
                     break;
                 }
                 catch (Exception e) {
                     e.printStackTrace();
+                    Message o = new Message();
+                    o.obj = Constants.WIFI_CONNECTION_FAILURE;
+                    mHandler.sendMessage(o);
                 }
 
             }
         }
     }
 
-    public void stopHotspot() {
-
-    }
-
-    public boolean isHotspotEnabled() {
-
-        Method method = null;
+    //check whether wifi hotspot on or off
+    public static boolean isApOn(Context context) {
+        WifiManager wifimanager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         try {
-            //wifiManager.getWifiState();
-            method = wifiManager.getClass().getDeclaredMethod("getWifiApState");
+            Method method = wifimanager.getClass().getDeclaredMethod("isWifiApEnabled");
             method.setAccessible(true);
-            int actualState = (Integer) method.invoke(wifiManager, (Object[]) null);
-
-            if(actualState == WifiManager.WIFI_STATE_ENABLED ) {
-                return true;
-            }
-
-        } catch (NoSuchMethodException e) {
-            logd(e.toString());
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            logd(e.toString());
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-            logd(e.toString());
+            return (Boolean) method.invoke(wifimanager);
         }
-
+        catch (Throwable ignored) {}
         return false;
     }
+
+    public static boolean configApState(Context context) {
+        WifiManager wifimanager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiConfiguration wificonfiguration = null;
+        try {
+            if(isApOn(context)) {
+                if (wifimanager != null) {
+                    wifimanager.setWifiEnabled(false);
+                }
+            }
+            Method method = null;
+            if (wifimanager != null) {
+                method = wifimanager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
+            }
+            if (method != null) {
+                method.invoke(wifimanager, wificonfiguration, !isApOn(context));
+            }
+            return true;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private void logd(String logMessage) {
         Log.d(HotSpotManager.TAG,logMessage);
     }

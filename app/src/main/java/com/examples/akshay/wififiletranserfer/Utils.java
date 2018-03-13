@@ -1,9 +1,14 @@
 package com.examples.akshay.wififiletranserfer;
 
+import android.util.Log;
+
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -17,6 +22,10 @@ import java.util.Random;
  */
 
 public class Utils {
+    private static final String TAG = "===Utils";
+    private static void logd(String logMessage) {
+        Log.d(Utils.TAG,logMessage);
+    }
     public static String getIPAddress(boolean useIPv4) {
         try {
             List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
@@ -40,7 +49,11 @@ public class Utils {
                     }
                 }
             }
-        } catch (Exception ex) { } // for now eat exceptions
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            logd(ex.toString());
+        }
+        logd("Returning empty IP address");
         return "";
     }
 
@@ -63,5 +76,39 @@ public class Utils {
         }
         return randomStringBuilder.toString();
     }
+
+    public static void parseString(String qrString) {
+
+        ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
+        try {
+            JSONObject jsonObject = new JSONObject(qrString);
+            connectionDetails.setIp(jsonObject.getString(Constants.KEY_IP));
+            connectionDetails.setPassword(jsonObject.getString(Constants.KEY_PASSWORD));
+            connectionDetails.setPort(jsonObject.getInt(Constants.KEY_SERVER_PORT));
+            connectionDetails.setSsid(jsonObject.getString(Constants.KEY_SSID));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    public static void reverse(byte[] array) {
+        if (array == null) {
+            return;
+        }
+        int i = 0;
+        int j = array.length - 1;
+        byte tmp;
+        while (j > i) {
+            tmp = array[j];
+            array[j] = array[i];
+            array[i] = tmp;
+            j--;
+            i++;
+        }
+    }
+
+
 
 }

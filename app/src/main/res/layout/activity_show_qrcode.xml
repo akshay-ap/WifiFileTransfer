@@ -15,4 +15,9 @@
         android:layout_height="wrap_content"
         app:srcCompat="@mipmap/ic_launcher"
     />
+
+    <TextView
+        android:id="@+id/activity_show_qrcode_textView_data"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>

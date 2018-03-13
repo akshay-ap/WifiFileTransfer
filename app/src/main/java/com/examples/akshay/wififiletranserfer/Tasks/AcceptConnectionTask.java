@@ -60,13 +60,17 @@ public class AcceptConnectionTask extends AsyncTask {
                 logd("doInBackground() "+"Server socket is closed");
             }
 
-            logd("listening on port: " + serverSocket.getLocalPort());
-            logd("ipv4 address : " + Utils.getIPAddress(true));
-
             ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
             connectionDetails.setIp(Utils.getIPAddress(true));
             connectionDetails.setPort(serverSocket.getLocalPort());
+
+
+            logd("listening on port: " + serverSocket.getLocalPort());
+            logd("ipv4 address current: " + Utils.getIPAddress(true) + " saved : " + connectionDetails.getIp());
+
             acceptConnectionTaskUpdate.Ready();
+
+
 
             logd("trying to accept connection");
             Socket client = serverSocket.accept();
