@@ -94,7 +94,7 @@ public class ShowQRCode extends AppCompatActivity {
         String result = null;
         try {
             json = new JSONObject();
-            json.put(Constants.KEY_SERVER_PORT,ip);
+            json.put(Constants.KEY_IP,ip);
             json.put(Constants.KEY_SSID,ssid);
             json.put(Constants.KEY_PASSWORD,password);
             json.put(Constants.KEY_SERVER_PORT,port);

@@ -10,7 +10,24 @@ public class ConnectionDetails {
     private String password;
     private int port;
 
-    public ConnectionDetails() {
+    private static volatile ConnectionDetails sConnectionDetails;
+
+    //private constructor.
+    private ConnectionDetails() {
+        if (sConnectionDetails != null){
+            throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
+        }
+    }
+
+    public static  ConnectionDetails getInstance() {
+        if (sConnectionDetails == null) {
+
+            synchronized (ConnectionDetails.class) {
+                if (sConnectionDetails == null) sConnectionDetails = new ConnectionDetails();
+            }
+        }
+
+        return sConnectionDetails;
     }
 
     public String getSsid() {
@@ -45,11 +62,6 @@ public class ConnectionDetails {
         this.port = port;
     }
 
-    public ConnectionDetails(String ssid, String ip, String password, int port) {
-        this.ssid = ssid;
-        this.ip = ip;
-        this.password = password;
-        this.port = port;
-    }
+
 
 }

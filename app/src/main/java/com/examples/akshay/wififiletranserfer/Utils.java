@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by ash on 2/3/18.
@@ -48,6 +49,19 @@ public class Utils {
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, width, height);
         return bitMatrix;
+    }
+
+    public static String getRandomString() {
+        int LENGTH = 10;
+        Random generator = new Random();
+        StringBuilder randomStringBuilder = new StringBuilder();
+
+        char tempChar;
+        for (int i = 0; i < LENGTH; i++){
+            tempChar = (char) (generator.nextInt(96) + 32);
+            randomStringBuilder.append(tempChar);
+        }
+        return randomStringBuilder.toString();
     }
 
 }

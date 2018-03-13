@@ -112,8 +112,6 @@ public class NSDHelper {
                     logd("Same IP.");
                     return;
                 }
-
-                taskUpdate.TaskData(serviceInfo.getHost().getHostAddress(),serviceInfo.getPort());
                 mService = serviceInfo;
             }
         };

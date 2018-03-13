@@ -5,13 +5,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.drawable.GradientDrawable;
-import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -25,27 +21,18 @@ import android.widget.Toast;
 import com.examples.akshay.wififiletranserfer.ConnectionDetails;
 import com.examples.akshay.wififiletranserfer.Constants;
 import com.examples.akshay.wififiletranserfer.HotSpotManager;
-import com.examples.akshay.wififiletranserfer.NSDHelper;
 import com.examples.akshay.wififiletranserfer.R;
-import com.examples.akshay.wififiletranserfer.ServerDetails;
 import com.examples.akshay.wififiletranserfer.Tasks.AcceptConnectionTask;
 import com.examples.akshay.wififiletranserfer.Tasks.ConnectTask;
-import com.examples.akshay.wififiletranserfer.Utils;
 import com.examples.akshay.wififiletranserfer.interfaces.AcceptConnectionTaskUpdate;
 import com.examples.akshay.wififiletranserfer.interfaces.TaskUpdate;
-import com.google.zxing.WriterException;
-import com.google.zxing.common.BitMatrix;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
-import com.google.zxing.qrcode.encoder.QRCode;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.List;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -82,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         connectTask = new ConnectTask(this,this);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
-        hotSpotManager = new HotSpotManager(wifiManager);
+        hotSpotManager = new HotSpotManager(this,wifiManager);
 
         mReceiver = getBroadCastRecevier();
         mIntentFilter = new IntentFilter("android.net.wifi.WIFI_AP_STATE_CHANGED");
@@ -156,21 +143,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case  R.id.main_activity_button_scan_qrcode:
                 IntentIntegrator intentIntegrator= new IntentIntegrator(this);
                 intentIntegrator.setOrientationLocked(true);
+                intentIntegrator.setBeepEnabled(false);
                 intentIntegrator.initiateScan();
                 break;
             case R.id.main_activity_button_generate_qrcode:
 
                 Log.d(MainActivity.TAG,"main_activity_button_create_hotspot CLICK");
 
-                ConnectionDetails connectionDetails = hotSpotManager.createHotSpot();
+                hotSpotManager.createHotSpot();
 
-                Intent intentShowQRCode = new Intent(this, ShowQRCode.class);
-                intentShowQRCode.putExtra(Constants.KEY_SSID,connectionDetails.getSsid());
-                intentShowQRCode.putExtra(Constants.KEY_PASSWORD,connectionDetails.getPassword());
-                intentShowQRCode.putExtra(Constants.KEY_SERVER_PORT,connectionDetails.getPort());
-                intentShowQRCode.putExtra(Constants.KEY_IP,connectionDetails.getIp());
+                if(!(acceptConnectionTask.getStatus() == AsyncTask.Status.RUNNING)) {
+                    acceptConnectionTask.execute();
+                } else {
+                    acceptConnectionTask.cancel();
+                    logd("acceptConnectionTaskAlready running...cancelling it");
+                    makeToast("Aleady accepting connections...cancelling it");
+                }
 
-                startActivity(intentShowQRCode);
                 break;
             default:
                 makeToast("Yet to do...");
@@ -223,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private ConnectionDetails parseString(String qrString) {
 
-        ConnectionDetails connectionDetails = new ConnectionDetails();
+        ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
         try {
             JSONObject jsonObject = new JSONObject(qrString);
             connectionDetails.setIp(jsonObject.getString(Constants.KEY_IP));
@@ -340,33 +329,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void TaskData(String ip, int PORT) {
-        makeToast(ip+" "+ PORT);
-        ServerDetails.IP = ip;
-        ServerDetails.PORT = PORT;
-
-    }
-
-    @Override
-    public void SetIP(String ip) {
-        ServerDetails.IP = ip;
-    }
-
-    @Override
-    public void SetPORT(int port) {
-        ServerDetails.PORT = port;
-    }
-
-    @Override
     public void Ready() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 makeToast("Ready to accept connection");
                 //mNSDHelper.registerService(ServerDetails.PORT,ServerDetails.IP);
-
+                ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
+                Intent intentShowQRCode = new Intent(MainActivity.this, ShowQRCode.class);
+                intentShowQRCode.putExtra(Constants.KEY_SSID,connectionDetails.getSsid());
+                intentShowQRCode.putExtra(Constants.KEY_PASSWORD,connectionDetails.getPassword());
+                intentShowQRCode.putExtra(Constants.KEY_SERVER_PORT,connectionDetails.getPort());
+                intentShowQRCode.putExtra(Constants.KEY_IP,connectionDetails.getIp());
+                startActivity(intentShowQRCode);
             }
         });
+
+
 
     }
 

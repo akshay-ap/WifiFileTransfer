@@ -6,14 +6,10 @@ import android.net.wifi.WifiManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.examples.akshay.wififiletranserfer.activities.MainActivity;
-
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
-/**
- * Created by ash on 13/3/18.
- */
 
 public class HotSpotManager {
 
@@ -24,19 +20,30 @@ public class HotSpotManager {
         this.context = context;
         this.wifiManager = wifiManager;
     }
-    public ConnectionDetails createHotSpot() {
-        ConnectionDetails connectionDetails = new ConnectionDetails();
+    public void createHotSpot() {
+        ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
+
+        /*Create new AP an password*/
+        connectionDetails.setSsid(Utils.getRandomString());
+        connectionDetails.setPassword(Utils.getRandomString());
+
+        logd("Trying to create hotspot will SSID : " + connectionDetails.getSsid() + " Password : " + connectionDetails.getPassword());
         WifiConfiguration netConfig = new WifiConfiguration();
 
         if(wifiManager.isWifiEnabled())
         {
+            logd("wifiManager.isWifiEnabled() == true");
+
             wifiManager.setWifiEnabled(false);
         }
 
-        netConfig.SSID = Constants.SSID;
-        //netConfig.preSharedKey = Constants.PASSWORD;
-        netConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-
+        if(isHotspotEnabled()) {
+            logd("Hotspot is already enabled");
+        }
+        netConfig.SSID = connectionDetails.getSsid();
+        netConfig.preSharedKey = connectionDetails.getPassword();
+        netConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
+        netConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
 
         try{
             Method setWifiApMethod = wifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
@@ -53,11 +60,11 @@ public class HotSpotManager {
         } catch (Exception e) {
             Log.d(this.getClass().toString(), "", e);
         }
-        return connectionDetails;
     }
 
     private void connectToHotSpot() {
 
+        ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
         try {
             if(!wifiManager.isWifiEnabled())
             {
@@ -65,14 +72,14 @@ public class HotSpotManager {
             }
 
             WifiConfiguration wifiConfiguration = new WifiConfiguration();
-            wifiConfiguration.SSID = "\"" +Constants.SSID + "\"";
+            wifiConfiguration.SSID = "\"" +connectionDetails.getSsid() + "\"";
             wifiConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
 
             int netId = wifiManager.addNetwork(wifiConfiguration);
             wifiManager.disconnect();
             List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
             for( WifiConfiguration i : list ) {
-                if(i.SSID != null && i.SSID.equals("\"" + Constants.SSID + "\"")) {
+                if(i.SSID != null && i.SSID.equals("\"" + connectionDetails.getSsid() + "\"")) {
                     wifiManager.disconnect();
                     wifiManager.enableNetwork(i.networkId, true);
                     wifiManager.reconnect();
@@ -92,7 +99,32 @@ public class HotSpotManager {
 
     }
 
-    public boolean isEnabled() {
-        return true;
+    public boolean isHotspotEnabled() {
+
+        Method method = null;
+        try {
+            method = wifiManager.getClass().getDeclaredMethod("getWifiApState");
+            method.setAccessible(true);
+            int actualState = (Integer) method.invoke(wifiManager, (Object[]) null);
+
+            if(actualState == WifiManager.WIFI_STATE_ENABLED ) {
+                return true;
+            }
+
+        } catch (NoSuchMethodException e) {
+            logd(e.toString());
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            logd(e.toString());
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+            logd(e.toString());
+        }
+
+        return false;
+    }
+    private void logd(String logMessage) {
+        Log.d(HotSpotManager.TAG,logMessage);
     }
 }

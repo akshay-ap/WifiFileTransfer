@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.text.format.Formatter;
 import android.util.Log;
 
+import com.examples.akshay.wififiletranserfer.ConnectionDetails;
 import com.examples.akshay.wififiletranserfer.SocketHolder;
 import com.examples.akshay.wififiletranserfer.Utils;
 import com.examples.akshay.wififiletranserfer.interfaces.AcceptConnectionTaskUpdate;
@@ -52,8 +53,9 @@ public class AcceptConnectionTask extends AsyncTask {
             logd("listening on port: " + serverSocket.getLocalPort());
             logd("ipv4 address : " + Utils.getIPAddress(true));
 
-            acceptConnectionTaskUpdate.SetIP(Utils.getIPAddress(true));
-            acceptConnectionTaskUpdate.SetPORT(serverSocket.getLocalPort());
+            ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
+            connectionDetails.setIp(Utils.getIPAddress(true));
+            connectionDetails.setPort(serverSocket.getLocalPort());
             acceptConnectionTaskUpdate.Ready();
 
             logd("trying to accept connection");
