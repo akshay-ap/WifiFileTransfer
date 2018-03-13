@@ -22,8 +22,61 @@ public class HotSpotManager {
     }
     public void createHotSpot() {
         ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
+        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        if(wifiManager.isWifiEnabled())
+        {
+            wifiManager.setWifiEnabled(false);
+        }
+        Method[] wmMethods = wifiManager.getClass().getDeclaredMethods();   //Get all declared methods in WifiManager class
+        boolean methodFound=false;
+        for(Method method: wmMethods){
+            if(method.getName().equals("setWifiApEnabled")){
+                methodFound=true;
+                WifiConfiguration netConfig = new WifiConfiguration();
+                connectionDetails.setSsid(Utils.getRandomString());
+                connectionDetails.setPassword(Utils.getRandomString());
+                netConfig.SSID = connectionDetails.getSsid();
+                netConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
 
-        /*Create new AP an password*/
+                try {
+                    boolean apstatus=(Boolean) method.invoke(wifiManager, netConfig,true);
+                    for (Method isWifiApEnabledmethod: wmMethods)
+                    {
+                        if(isWifiApEnabledmethod.getName().equals("isWifiApEnabled")){
+                            while(!(Boolean)isWifiApEnabledmethod.invoke(wifiManager)){
+                            };
+                            for(Method method1: wmMethods){
+                                if(method1.getName().equals("getWifiApState")){
+                                    int apstate;
+                                    apstate=(Integer)method1.invoke(wifiManager);
+                                }
+                            }
+                        }
+                    }
+                    if(apstatus)
+                    {
+                       logd("SUCCESSdddd");
+
+                    }else
+                    {
+                       logd("FAILED");
+
+                    }
+
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+       /* ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
+
+        *//*Create new AP and password*//*
         connectionDetails.setSsid(Utils.getRandomString());
         connectionDetails.setPassword(Utils.getRandomString());
 
@@ -43,6 +96,8 @@ public class HotSpotManager {
         netConfig.SSID = connectionDetails.getSsid();
         netConfig.preSharedKey = connectionDetails.getPassword();
         netConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
+        netConfig.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+        netConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
         netConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
 
         try{
@@ -59,40 +114,35 @@ public class HotSpotManager {
 
         } catch (Exception e) {
             Log.d(this.getClass().toString(), "", e);
-        }
+        }*/
     }
 
-    private void connectToHotSpot() {
-
+    public void connectToHotSpot() {
+        WifiConfiguration conf = new WifiConfiguration();
         ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
-        try {
-            if(!wifiManager.isWifiEnabled())
-            {
-                wifiManager.setWifiEnabled(true);
-            }
+        String ssid = "\"" +connectionDetails.getSsid()+"\"";
+        conf.SSID = ssid;
+        conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+        //WifiManager wifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
+        wifiManager.addNetwork(conf);
 
-            WifiConfiguration wifiConfiguration = new WifiConfiguration();
-            wifiConfiguration.SSID = "\"" +connectionDetails.getSsid() + "\"";
-            wifiConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-
-            int netId = wifiManager.addNetwork(wifiConfiguration);
-            wifiManager.disconnect();
-            List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
-            for( WifiConfiguration i : list ) {
-                if(i.SSID != null && i.SSID.equals("\"" + connectionDetails.getSsid() + "\"")) {
+        List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
+        for( WifiConfiguration i : list ) {
+            //"\""+"TinyBox"+"\""
+            if(i.SSID != null && i.SSID.equals(ssid)) {
+                try {
                     wifiManager.disconnect();
                     wifiManager.enableNetwork(i.networkId, true);
+                    logd("i.networkId " + i.networkId + "\n");
                     wifiManager.reconnect();
-
                     break;
                 }
-            }
-        }catch (Exception e) {
-            e.printStackTrace();
-            Log.d(HotSpotManager.TAG,e.toString());
-            Toast.makeText(context,"Exception :" + e.toString(),Toast.LENGTH_LONG).show();
-        }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
 
+            }
+        }
     }
 
     public void stopHotspot() {

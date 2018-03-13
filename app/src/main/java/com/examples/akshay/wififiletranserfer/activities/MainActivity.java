@@ -169,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void setupUI() {
 
-/*        buttonCreateHotSpot = findViewById(R.id.main_activity_button_create_hotspot);
+/*      buttonCreateHotSpot = findViewById(R.id.main_activity_button_create_hotspot);
         buttonCreateHotSpot.setOnClickListener(this);
 
         buttonConnectToHotSpot = findViewById(R.id.main_activity_button_connect_to_hotspot);
@@ -202,15 +202,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
                 logd(result.getContents());
 
-                ConnectionDetails connectionDetails = parseString(result.getContents());
+                parseString(result.getContents());
+                ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
                 logd( "Parsed contents : " + connectionDetails.getIp() + " " + connectionDetails.getSsid() + " " + connectionDetails.getPassword() + " " + connectionDetails.getPort());
+
+                if(connectionDetails.getIp() != null && connectionDetails.getPort() != 0 && connectionDetails.getPassword() !=null && connectionDetails.getSsid()!= null) {
+                    logd("Valid data received...");
+
+                    hotSpotManager.connectToHotSpot();
+
+                    /*if(!(connectTask.getStatus() == AsyncTask.Status.RUNNING)) {
+                        connectTask.execute();
+                    } else {
+                        logd("connectTask running..cancelling it..");
+                        makeToast("connectTask running..cancelling it..click again to start...");
+                        connectTask.cancel();
+                    }*/
+                } else {
+                    makeToast("Invalid data recevied...");
+                    logd("QRCode scan returned invalid data");
+                }
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
-    private ConnectionDetails parseString(String qrString) {
+    private void parseString(String qrString) {
 
         ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
         try {
@@ -222,7 +240,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return  connectionDetails;
     }
 
 
@@ -230,7 +247,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     public void checkPermissions() {
-
 
         boolean read = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PERMISSION_GRANTED;
         boolean write = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PERMISSION_GRANTED;
