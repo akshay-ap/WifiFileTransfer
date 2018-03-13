@@ -51,7 +51,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,TaskUpdate, AcceptConnectionTaskUpdate {
 
     WifiManager wifiManager;
-    NSDHelper mNSDHelper;
+    //NSDHelper mNSDHelper;
 
     Button buttonCreateHotSpot;
     Button buttonConnectToHotSpot;
@@ -73,8 +73,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         setupUI();
         checkPermissions();
-        mNSDHelper = new NSDHelper(this,this);
-        mNSDHelper.initializeNsd();
+        //mNSDHelper = new NSDHelper(this,this);
+        //mNSDHelper.initializeNsd();
         acceptConnectionTask = new AcceptConnectionTask(this,this);
         connectTask = new ConnectTask(this,this);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
@@ -87,16 +87,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onPause() {
         super.onPause();
-        if (mNSDHelper != null && mNSDHelper.isDiscovering()) {
+       /* if (mNSDHelper != null && mNSDHelper.isDiscovering()) {
             mNSDHelper.stopDiscovery();
-        }
+        }*/
         unregisterReceiver(mReceiver);
         logd("onPause");
     }
 
     @Override
     protected void onDestroy() {
-        mNSDHelper.tearDown();
+        //mNSDHelper.tearDown();
         super.onDestroy();
     }
 
@@ -126,13 +126,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.main_activity_button_test2:
                 Log.d(MainActivity.TAG,"main_activity_button_test2 CLICK");
-                if(!mNSDHelper.isDiscovering()) {
+             /*   if(!mNSDHelper.isDiscovering()) {
                     logd("trying to start discovery");
                     mNSDHelper.discoverServices();
                 } else {
                     logd("already discovering");
                     makeToast("Already discovering");
-                }
+                }*/
                 break;
             case R.id.main_activity_button_test3:
                 if(!(acceptConnectionTask.getStatus() == AsyncTask.Status.RUNNING)) {
@@ -411,7 +411,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 makeToast("Ready to accept connection");
-                mNSDHelper.registerService(ServerDetails.PORT,ServerDetails.IP);
+                //mNSDHelper.registerService(ServerDetails.PORT,ServerDetails.IP);
 
             }
         });
