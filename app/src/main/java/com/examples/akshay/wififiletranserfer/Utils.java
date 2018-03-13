@@ -1,5 +1,11 @@
 package com.examples.akshay.wififiletranserfer;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Collections;
@@ -36,4 +42,12 @@ public class Utils {
         } catch (Exception ex) { } // for now eat exceptions
         return "";
     }
+
+    public static BitMatrix generateQRCodeImage(String text, int width, int height)
+            throws WriterException, IOException {
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, width, height);
+        return bitMatrix;
+    }
+
 }

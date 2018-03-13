@@ -52,4 +52,15 @@
         android:layout_height="wrap_content"
         android:text="@string/connect_to_server" />
 
+    <Button
+        android:id="@+id/main_activity_button_scan_qrcode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/scan_qr_code" />
+
+    <Button
+        android:id="@+id/main_activity_button_generate_qrcode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/generate_qr_code" />
 </LinearLayout>

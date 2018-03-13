@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.drawable.GradientDrawable;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -26,9 +28,16 @@ import com.examples.akshay.wififiletranserfer.R;
 import com.examples.akshay.wififiletranserfer.ServerDetails;
 import com.examples.akshay.wififiletranserfer.Tasks.AcceptConnectionTask;
 import com.examples.akshay.wififiletranserfer.Tasks.ConnectTask;
+import com.examples.akshay.wififiletranserfer.Utils;
 import com.examples.akshay.wififiletranserfer.interfaces.AcceptConnectionTaskUpdate;
 import com.examples.akshay.wififiletranserfer.interfaces.TaskUpdate;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+import com.google.zxing.qrcode.encoder.QRCode;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button buttonTest2;
     Button buttonTest3;
     Button buttonTest4;
+    Button buttonScanQRCode;
+    Button buttonGenerateQRCode;
 
     AcceptConnectionTask acceptConnectionTask;
     ConnectTask connectTask;
@@ -133,6 +144,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     logd("connectTask running");
                 }
                 break;
+            case  R.id.main_activity_button_scan_qrcode:
+                IntentIntegrator intentIntegrator= new IntentIntegrator(this);
+                intentIntegrator.setOrientationLocked(true);
+                intentIntegrator.initiateScan();
+                break;
+            case R.id.main_activity_button_generate_qrcode:
+                Intent intentShowQRCode = new Intent(this, ShowQRCode.class);
+                intentShowQRCode.putExtra(Constants.KEY_SSID,Constants.SSID);
+                intentShowQRCode.putExtra(Constants.KEY_PASSWORD,Constants.PASSWORD);
+                intentShowQRCode.putExtra(Constants.KEY_SERVER_PORT,Constants.SERVER_PORT);
+                intentShowQRCode.putExtra(Constants.KEY_IP,Constants.KEY_IP);
+
+                startActivity(intentShowQRCode);
+                break;
             default:
                 makeToast("Yet to do...");
                 break;
@@ -156,7 +181,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         buttonTest4 = findViewById(R.id.main_activity_button_test4);
         buttonTest4.setOnClickListener(this);
 
+        buttonScanQRCode = findViewById(R.id.main_activity_button_scan_qrcode);
+        buttonScanQRCode.setOnClickListener(this);
+
+        buttonGenerateQRCode = findViewById(R.id.main_activity_button_generate_qrcode);
+        buttonGenerateQRCode.setOnClickListener(this);
+
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if(result != null) {
+            if(result.getContents() == null) {
+                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+
 
     private void createHotSpot() {
         WifiConfiguration netConfig = new WifiConfiguration();
