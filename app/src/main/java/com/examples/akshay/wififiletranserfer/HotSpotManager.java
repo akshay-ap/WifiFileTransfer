@@ -3,9 +3,9 @@ package com.examples.akshay.wififiletranserfer;
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
-
-import com.examples.akshay.wififiletranserfer.interfaces.HotspotUpdate;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,15 +15,19 @@ import java.util.List;
 public class HotSpotManager {
 
     private static final String TAG = "===HotSpotManager";
-    WifiManager wifiManager;
-    HotspotUpdate hotspotUpdate;
-    Context context;
-    public HotSpotManager(Context context,WifiManager wifiManager,HotspotUpdate hotspotUpdate) {
+    private WifiManager wifiManager;
+    private Handler mHandler;
+    private Message o;
+    private Context context;
+    public HotSpotManager(Context context,WifiManager wifiManager,Handler mHandler) {
         this.context = context;
         this.wifiManager = wifiManager;
-        this.hotspotUpdate = hotspotUpdate;
+        this.mHandler = mHandler;
     }
     public void createHotSpot() {
+        o = new Message();
+        o.obj = Constants.HOTSPOT_CREATION_STARTED;
+        mHandler.sendMessage(o);
         ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         if(wifiManager.isWifiEnabled())
@@ -58,9 +62,14 @@ public class HotSpotManager {
                         }
                     }
                     if(apstatus) {
-                        hotspotUpdate.hotspotCreated();
+                        o = new Message();
+                        o.obj = Constants.HOTSPOT_CREATION_SUCCESS;
+                        mHandler.sendMessage(o);
                        logd("SUCCESS");
                     }else {
+                        o = new Message();
+                        o.obj = Constants.HOTSPOT_CREATION_FAILED;
+                        mHandler.sendMessage(o);
                        logd("FAILED");
                     }
 
@@ -84,6 +93,14 @@ public class HotSpotManager {
         wifiManager.addNetwork(conf);
 
         List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
+        if(list == null ) {
+            logd("list is null");
+            Message o = new Message();
+            o.obj = Constants.WIFI_CONNECTION_FAILURE;
+            mHandler.sendMessage(o);
+            return;
+        }
+
         for( WifiConfiguration i : list ) {
             if(i.SSID != null && i.SSID.equals(ssid)) {
                 try {
@@ -91,7 +108,7 @@ public class HotSpotManager {
                     wifiManager.enableNetwork(i.networkId, true);
                     logd("i.networkId " + i.networkId + "\n");
                     wifiManager.reconnect();
-                    hotspotUpdate.connectedToHotspot();
+                    //hotspotUpdate.connectedToHotspot();
                     break;
                 }
                 catch (Exception e) {
