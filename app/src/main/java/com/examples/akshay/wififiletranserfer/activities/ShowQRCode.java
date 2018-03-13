@@ -41,24 +41,28 @@ public class ShowQRCode extends AppCompatActivity {
             String PASSWORD = extras.getString(Constants.KEY_PASSWORD);
             String IP = extras.getString(Constants.KEY_IP);
             int PORT = extras.getInt(Constants.KEY_SERVER_PORT,-1);
+            logd(SSID + " " + PASSWORD + " " + IP + " " + PORT);
 
             if (SSID != null && PASSWORD != null && IP != null && PORT != -1 ) {
                 makeToast("Valid data received");
-                bulidString(IP,SSID,PASSWORD,PORT);
+                String qrString = bulidString(IP,SSID,PASSWORD,PORT);
+
+                BitMatrix bitMatrix = Utils.generateQRCodeImage(qrString,400,400);
+                int height = bitMatrix.getHeight();
+                int width = bitMatrix.getWidth();
+                Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+                for (int x = 0; x < width; x++){
+                    for (int y = 0; y < height; y++){
+                        bmp.setPixel(x, y, bitMatrix.get(x,y) ? Color.BLACK : Color.WHITE);
+                    }
+                }
+                imageViewShowQRCode.setImageBitmap(bmp);
+
             } else {
                 makeToast("Invalid data received");
             }
 
-            BitMatrix bitMatrix = Utils.generateQRCodeImage("yes",400,400);
-            int height = bitMatrix.getHeight();
-            int width = bitMatrix.getWidth();
-            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-            for (int x = 0; x < width; x++){
-                for (int y = 0; y < height; y++){
-                    bmp.setPixel(x, y, bitMatrix.get(x,y) ? Color.BLACK : Color.WHITE);
-                }
-            }
-            imageViewShowQRCode.setImageBitmap(bmp);
+
 
         } catch (WriterException e) {
             e.printStackTrace();
@@ -76,6 +80,7 @@ public class ShowQRCode extends AppCompatActivity {
     }
 
     private void logd(String logMessage) {
+        if(logMessage == null) logMessage = "Null";
         Log.d(ShowQRCode.TAG,logMessage);
     }
 
@@ -86,30 +91,20 @@ public class ShowQRCode extends AppCompatActivity {
     private String bulidString(String ip, String ssid, String password, int port) {
         JSONObject json  = null;
 
-
         String result = null;
         try {
-            //json = new JSONObject("{hello1: hi, hello2: hey}");
+            json = new JSONObject();
             json.put(Constants.KEY_SERVER_PORT,ip);
             json.put(Constants.KEY_SSID,ssid);
             json.put(Constants.KEY_PASSWORD,password);
             json.put(Constants.KEY_SERVER_PORT,port);
 
             result = json.toString();
-/*            StringBuilder sb = new StringBuilder();
-            for (Iterator<String> it = json.keys(); it.hasNext();) {
-                String k = it.next();
-                sb.append(k);
-                sb.append(": ");
-                sb.append(json.getString(k));
-                sb.append(", ");
-            }
-        return  sb.toString();*/
+            makeToast(result);
+            logd(result);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
-
         return result;
     }
 }

@@ -22,6 +22,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.examples.akshay.wififiletranserfer.ConnectionDetails;
 import com.examples.akshay.wififiletranserfer.Constants;
 import com.examples.akshay.wififiletranserfer.NSDHelper;
 import com.examples.akshay.wififiletranserfer.R;
@@ -36,6 +37,9 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.google.zxing.qrcode.encoder.QRCode;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -197,13 +201,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+                logd(result.getContents());
+
+                ConnectionDetails connectionDetails = parseString(result.getContents());
+                logd( "Parsed contents : " + connectionDetails.getIp() + " " + connectionDetails.getSsid() + " " + connectionDetails.getPassword() + " " + connectionDetails.getPort());
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
+    private ConnectionDetails parseString(String qrString) {
 
+        ConnectionDetails connectionDetails = new ConnectionDetails();
+        try {
+            JSONObject jsonObject = new JSONObject(qrString);
+            connectionDetails.setIp(jsonObject.getString(Constants.KEY_IP));
+            connectionDetails.setPassword(jsonObject.getString(Constants.KEY_PASSWORD));
+            connectionDetails.setPort(jsonObject.getInt(Constants.KEY_SERVER_PORT));
+            connectionDetails.setSsid(jsonObject.getString(Constants.KEY_SSID));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return  connectionDetails;
+    }
 
     private void createHotSpot() {
         WifiConfiguration netConfig = new WifiConfiguration();
