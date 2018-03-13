@@ -25,6 +25,7 @@ import com.examples.akshay.wififiletranserfer.R;
 import com.examples.akshay.wififiletranserfer.Tasks.AcceptConnectionTask;
 import com.examples.akshay.wififiletranserfer.Tasks.ConnectTask;
 import com.examples.akshay.wififiletranserfer.interfaces.AcceptConnectionTaskUpdate;
+import com.examples.akshay.wififiletranserfer.interfaces.HotspotUpdate;
 import com.examples.akshay.wififiletranserfer.interfaces.TaskUpdate;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -36,14 +37,12 @@ import java.util.ArrayList;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener,TaskUpdate, AcceptConnectionTaskUpdate {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, TaskUpdate, HotspotUpdate, AcceptConnectionTaskUpdate {
 
     WifiManager wifiManager;
     //NSDHelper mNSDHelper;
 
-/*    Button buttonCreateHotSpot;
-    Button buttonConnectToHotSpot;
-    Button buttonTest2;
+/*    Button buttonTest2;
     Button buttonTest3;
     Button buttonTest4;*/
 
@@ -69,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         connectTask = new ConnectTask(this,this);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
-        hotSpotManager = new HotSpotManager(this,wifiManager);
+        hotSpotManager = new HotSpotManager(this,wifiManager,this);
 
         mReceiver = getBroadCastRecevier();
         mIntentFilter = new IntentFilter("android.net.wifi.WIFI_AP_STATE_CHANGED");
@@ -149,16 +148,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.main_activity_button_generate_qrcode:
 
                 Log.d(MainActivity.TAG,"main_activity_button_create_hotspot CLICK");
+                Thread t = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        hotSpotManager.createHotSpot();
+                    }
+                });
 
-                hotSpotManager.createHotSpot();
+                t.start();
 
-                if(!(acceptConnectionTask.getStatus() == AsyncTask.Status.RUNNING)) {
-                    acceptConnectionTask.execute();
-                } else {
-                    acceptConnectionTask.cancel();
-                    logd("acceptConnectionTaskAlready running...cancelling it");
-                    makeToast("Aleady accepting connections...cancelling it");
-                }
+
 
                 break;
             default:
@@ -285,9 +284,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.d(MainActivity.TAG, "Requesting permissions");
             return;
         }
-
-        //buttonConnectToHotSpot.setEnabled(true);
-        //buttonCreateHotSpot.setEnabled(true );
     }
 
     @Override
@@ -395,5 +391,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         };
+    }
+
+    @Override
+    public void hotspotCreated() {
+        if(acceptConnectionTask.getStatus() == AsyncTask.Status.RUNNING) {
+            acceptConnectionTask.cancel();
+            logd("Cancelled accept connection Task");
+            acceptConnectionTask = new AcceptConnectionTask(MainActivity.this,MainActivity.this);
+            logd("acceptConnectionTaskAlready running...cancelling it");
+        }
+        acceptConnectionTask.execute();
+
+    }
+
+    @Override
+    public void hotspotCreationFailed() {
+        makeToast("Hotspot creation failed");
+    }
+
+    @Override
+    public void connectedToHotspot() {
+
+    }
+
+    @Override
+    public void wifiConnectionFailed() {
+
     }
 }

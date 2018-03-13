@@ -100,7 +100,7 @@ public class ShowQRCode extends AppCompatActivity {
             json.put(Constants.KEY_SERVER_PORT,port);
 
             result = json.toString();
-            makeToast(result);
+            makeToast("Please scan the QR CODE");
             logd(result);
         } catch (JSONException e) {
             e.printStackTrace();

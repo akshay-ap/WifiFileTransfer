@@ -4,7 +4,8 @@ import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.util.Log;
-import android.widget.Toast;
+
+import com.examples.akshay.wififiletranserfer.interfaces.HotspotUpdate;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,10 +16,12 @@ public class HotSpotManager {
 
     private static final String TAG = "===HotSpotManager";
     WifiManager wifiManager;
+    HotspotUpdate hotspotUpdate;
     Context context;
-    public HotSpotManager(Context context,WifiManager wifiManager) {
+    public HotSpotManager(Context context,WifiManager wifiManager,HotspotUpdate hotspotUpdate) {
         this.context = context;
         this.wifiManager = wifiManager;
+        this.hotspotUpdate = hotspotUpdate;
     }
     public void createHotSpot() {
         ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
@@ -40,11 +43,12 @@ public class HotSpotManager {
 
                 try {
                     boolean apstatus=(Boolean) method.invoke(wifiManager, netConfig,true);
-                    for (Method isWifiApEnabledmethod: wmMethods)
-                    {
-                        if(isWifiApEnabledmethod.getName().equals("isWifiApEnabled")){
-                            while(!(Boolean)isWifiApEnabledmethod.invoke(wifiManager)){
+                    for (Method isWifiApEnabledmethod: wmMethods) {
+                        if(isWifiApEnabledmethod.getName().equals("isWifiApEnabled")) {
+                            while(!(Boolean)isWifiApEnabledmethod.invoke(wifiManager)) {
+
                             };
+
                             for(Method method1: wmMethods){
                                 if(method1.getName().equals("getWifiApState")){
                                     int apstate;
@@ -53,14 +57,11 @@ public class HotSpotManager {
                             }
                         }
                     }
-                    if(apstatus)
-                    {
-                       logd("SUCCESSdddd");
-
-                    }else
-                    {
+                    if(apstatus) {
+                        hotspotUpdate.hotspotCreated();
+                       logd("SUCCESS");
+                    }else {
                        logd("FAILED");
-
                     }
 
                 } catch (IllegalArgumentException e) {
@@ -72,49 +73,6 @@ public class HotSpotManager {
                 }
             }
         }
-
-
-       /* ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
-
-        *//*Create new AP and password*//*
-        connectionDetails.setSsid(Utils.getRandomString());
-        connectionDetails.setPassword(Utils.getRandomString());
-
-        logd("Trying to create hotspot will SSID : " + connectionDetails.getSsid() + " Password : " + connectionDetails.getPassword());
-        WifiConfiguration netConfig = new WifiConfiguration();
-
-        if(wifiManager.isWifiEnabled())
-        {
-            logd("wifiManager.isWifiEnabled() == true");
-
-            wifiManager.setWifiEnabled(false);
-        }
-
-        if(isHotspotEnabled()) {
-            logd("Hotspot is already enabled");
-        }
-        netConfig.SSID = connectionDetails.getSsid();
-        netConfig.preSharedKey = connectionDetails.getPassword();
-        netConfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
-        netConfig.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-        netConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-        netConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-
-        try{
-            Method setWifiApMethod = wifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
-            boolean apstatus=(Boolean) setWifiApMethod.invoke(wifiManager, netConfig,true);
-
-            Method isWifiApEnabledmethod = wifiManager.getClass().getMethod("isWifiApEnabled");
-            while(!(Boolean)isWifiApEnabledmethod.invoke(wifiManager)){};
-            Method getWifiApStateMethod = wifiManager.getClass().getMethod("getWifiApState");
-            int apstate=(Integer)getWifiApStateMethod.invoke(wifiManager);
-            Method getWifiApConfigurationMethod = wifiManager.getClass().getMethod("getWifiApConfiguration");
-            netConfig=(WifiConfiguration)getWifiApConfigurationMethod.invoke(wifiManager);
-            Log.d("CLIENT", "\nSSID:"+netConfig.SSID+"\nPassword:"+netConfig.preSharedKey+"\n");
-
-        } catch (Exception e) {
-            Log.d(this.getClass().toString(), "", e);
-        }*/
     }
 
     public void connectToHotSpot() {
@@ -123,18 +81,17 @@ public class HotSpotManager {
         String ssid = "\"" +connectionDetails.getSsid()+"\"";
         conf.SSID = ssid;
         conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-        //WifiManager wifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
         wifiManager.addNetwork(conf);
 
         List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
         for( WifiConfiguration i : list ) {
-            //"\""+"TinyBox"+"\""
             if(i.SSID != null && i.SSID.equals(ssid)) {
                 try {
                     wifiManager.disconnect();
                     wifiManager.enableNetwork(i.networkId, true);
                     logd("i.networkId " + i.networkId + "\n");
                     wifiManager.reconnect();
+                    hotspotUpdate.connectedToHotspot();
                     break;
                 }
                 catch (Exception e) {
@@ -153,6 +110,7 @@ public class HotSpotManager {
 
         Method method = null;
         try {
+            //wifiManager.getWifiState();
             method = wifiManager.getClass().getDeclaredMethod("getWifiApState");
             method.setAccessible(true);
             int actualState = (Integer) method.invoke(wifiManager, (Object[]) null);

@@ -49,6 +49,9 @@ public class AcceptConnectionTask extends AsyncTask {
     @Override
     protected Object doInBackground(Object[] objects) {
         try {
+/*            if(!serverSocket.isClosed()) {
+                serverSocket.close();
+            }*/
             serverSocket = new ServerSocket(0);
             logd("listening on port: " + serverSocket.getLocalPort());
             logd("ipv4 address : " + Utils.getIPAddress(true));
