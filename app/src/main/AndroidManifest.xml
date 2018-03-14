@@ -25,7 +25,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".activities.DataTransfer" />
-        <activity android:name=".activities.ShowQRCode"></activity>
+        <activity android:name=".activities.ShowQRCode" />
+        <activity android:name=".activities.ConnectToServer"></activity>
     </application>
 
 </manifest>

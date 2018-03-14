@@ -5,7 +5,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.examples.akshay.wififiletranserfer.ConnectionDetails;
-import com.examples.akshay.wififiletranserfer.interfaces.AcceptConnectionTaskUpdate;
+import com.examples.akshay.wififiletranserfer.interfaces.ConnectTaskUpdate;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -19,20 +19,20 @@ import java.net.Socket;
 public class ConnectTask extends AsyncTask {
     private static final String TAG = "===ConnectTask";
     Socket mSocket;
-    AcceptConnectionTaskUpdate acceptConnectionTaskUpdate;
+    ConnectTaskUpdate connectTaskUpdate;
     private Context context;
-    public ConnectTask(Context context,AcceptConnectionTaskUpdate acceptConnectionTask) {
+    public ConnectTask(Context context,ConnectTaskUpdate connectTaskUpdate) {
         this.context = context;
-        this.acceptConnectionTaskUpdate = acceptConnectionTask;
+        this.connectTaskUpdate = connectTaskUpdate;
+        logd("Object created");
     }
 
 
     @Override
     protected Object doInBackground(Object[] objects)
     {
+        connectTaskUpdate.connectTaskStarted();
         ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
-
-
 
         String ip = connectionDetails.getIp();
         int port = connectionDetails.getPort();
@@ -40,7 +40,7 @@ public class ConnectTask extends AsyncTask {
         try {
             logd("Creating socket object with IP: " + ip + " PORT : " + port);
             mSocket = new Socket(ip,port);
-            acceptConnectionTaskUpdate.StartDataTransfer();
+            connectTaskUpdate.connectTaskStartDataTransfer();
             logd("Socket object created");
         } catch (IOException e) {
             logd("exception " + e.toString());
@@ -56,11 +56,12 @@ public class ConnectTask extends AsyncTask {
     protected void onPostExecute(Object o) {
         super.onPostExecute(o);
         Log.e(TAG, "onPostExecute()");
-
+        connectTaskUpdate.connectTaskCompleted("Completed");
     }
 
     // Closes the client socket and causes the thread to finish.
     public void cancel() {
+        connectTaskUpdate.connectTaskCancelled();
     }
     private void logd(String log) {
         Log.d(ConnectTask.TAG,log);

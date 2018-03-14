@@ -25,10 +25,11 @@
         android:text="@string/lead_device" />
 
     <Button
-        android:id="@+id/main_activity_button_connect"
+        android:visibility="gone"
+        android:id="@+id/main_activity_button_test"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/connect" />
+        android:text="@string/test" />
 
     <Space
         android:layout_width="match_parent"

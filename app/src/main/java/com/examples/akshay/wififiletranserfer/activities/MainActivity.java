@@ -41,7 +41,7 @@ import java.util.ArrayList;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, TaskUpdate, AcceptConnectionTaskUpdate {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     WifiManager wifiManager;
     AlertDialog alertDialog;
@@ -49,11 +49,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     HotSpotManager hotSpotManager;
     Button buttonScanQRCode;
     Button buttonGenerateQRCode;
+
     Thread hotspotCreationThread;
     Handler mHandler;
-    AcceptConnectionTask acceptConnectionTask;
-    ConnectTask connectTask;
-    Button buttonConnect;
+    //AcceptConnectionTask acceptConnectionTask;
     BroadcastReceiver mReceiver;
     IntentFilter mIntentFilter;
     private static final String TAG = "===MainActivity";
@@ -65,8 +64,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setupUI();
         checkPermissions();
 
-        acceptConnectionTask = new AcceptConnectionTask(this,this);
-        connectTask = new ConnectTask(this,this);
+        //acceptConnectionTask = new AcceptConnectionTask(this,this);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         mReceiver = getBroadCastRecevier();
@@ -168,20 +166,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 hotspotCreationThread.start();
                 break;
 
-            case R.id.main_activity_button_connect:
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        makeToast("Starting socket connection");
-                        if(connectTask.getStatus() == AsyncTask.Status.RUNNING || connectTask.getStatus() == AsyncTask.Status.FINISHED) {
-                            connectTask.cancel();
-                            connectTask = null;
-                            connectTask = new ConnectTask(MainActivity.this,MainActivity.this);
-                        }
-                        connectTask.execute();
-                    }
-                }, 3000);
-                break;
             default:
                 makeToast("Yet to do...");
                 break;
@@ -196,19 +180,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         buttonGenerateQRCode = findViewById(R.id.main_activity_button_generate_qrcode);
         buttonGenerateQRCode.setOnClickListener(this);
 
-        buttonConnect = findViewById(R.id.main_activity_button_connect);
-        buttonConnect.setOnClickListener(this);
-
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Creating hotspot");
         builder.setCancelable(false);
-/*        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                Log.d(MainActivity.TAG,"Cancel button Clicked");
-
-            }
-        });*/
         alertDialog = builder.create();
 
     }
@@ -292,15 +266,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             for (int res : grantResults) {
                 if(res == PERMISSION_GRANTED) all++;
             }
-
             if(all == grantResults.length) {
-                //buttonConnectToHotSpot.setEnabled(true);
-               // buttonCreateHotSpot.setEnabled(true);
                 Log.d(MainActivity.TAG,"All permissions granted");
             } else {
                 Log.d(MainActivity.TAG,"permissions denied : " + (grantResults.length-all));
-                //buttonConnectToHotSpot.setEnabled(false);
-               // buttonCreateHotSpot.setEnabled(false);
             }
         }
     }
@@ -315,50 +284,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             x = "null";
         }
         Toast.makeText(getApplicationContext(),x,Toast.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void TaskCompleted(String message) {
-
-    }
-
-    @Override
-    public void TaskStarted() {
-
-    }
-
-    @Override
-    public void TaskProgressPublish(String Update) {
-
-    }
-
-    @Override
-    public void TaskError(String e) {
-
-    }
-
-    @Override
-    public void Ready() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                makeToast("Ready to accept connection");
-                //mNSDHelper.registerService(ServerDetails.PORT,ServerDetails.IP);
-                ConnectionDetails connectionDetails = ConnectionDetails.getInstance();
-                Intent intentShowQRCode = new Intent(MainActivity.this, ShowQRCode.class);
-                intentShowQRCode.putExtra(Constants.KEY_SSID,connectionDetails.getSsid());
-                intentShowQRCode.putExtra(Constants.KEY_PASSWORD,connectionDetails.getPassword());
-                intentShowQRCode.putExtra(Constants.KEY_SERVER_PORT,connectionDetails.getPort());
-                intentShowQRCode.putExtra(Constants.KEY_IP,connectionDetails.getIp());
-                startActivity(intentShowQRCode);
-            }
-        });
-    }
-
-    @Override
-    public void StartDataTransfer() {
-        Intent intent = new Intent(this, DataTransfer.class);
-        startActivity(intent);
     }
 
     private BroadcastReceiver getBroadCastRecevier() {
@@ -407,29 +332,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if(alertDialog.isShowing()) {
                             alertDialog.dismiss();
                         }
-                        makeToast("Hotspot created");
+
+                        Intent intentShowQRCode = new Intent(MainActivity.this, ShowQRCode.class);
+                        startActivity(intentShowQRCode);
+
+/*                        makeToast("Hotspot created");
                         if(acceptConnectionTask.getStatus() == AsyncTask.Status.RUNNING) {
                             acceptConnectionTask.cancel();
                             acceptConnectionTask = null;
                             acceptConnectionTask = new AcceptConnectionTask(MainActivity.this,MainActivity.this);
                         }
-                        acceptConnectionTask.execute();
+                        acceptConnectionTask.execute();*/
                         break;
                     case Constants.WIFI_CONNECTION_SUCCESS:
+                        startActivity(new Intent(MainActivity.this,ConnectToServer.class));
                         logd("Connected to hotspot");
-
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                makeToast("Initiating socket connection");
-                                if(connectTask.getStatus() == AsyncTask.Status.RUNNING || connectTask.getStatus() == AsyncTask.Status.FINISHED) {
-                                    connectTask.cancel();
-                                    connectTask = null;
-                                    connectTask = new ConnectTask(MainActivity.this,MainActivity.this);
-                                }
-                                connectTask.execute();
-                            }
-                        }, 3000);
 
                         break;
                     case Constants.WIFI_CONNECTION_FAILURE:
