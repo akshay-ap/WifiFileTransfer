@@ -1,5 +1,6 @@
 package com.examples.akshay.wififiletranserfer.activities;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -22,6 +23,7 @@ public class ConnectToServer extends AppCompatActivity implements View.OnClickLi
     private static final String TAG = "===ConnectToServer";
 
     ConnectTask connectTask;
+    AlertDialog alertDialog;
 
     Button buttonConnect;
     @Override
@@ -35,12 +37,26 @@ public class ConnectToServer extends AppCompatActivity implements View.OnClickLi
 
         buttonConnect = findViewById(R.id.connect_to_server_activity_button_connect);
         buttonConnect.setOnClickListener(this);
+
+        alertDialog = getAlertDialog();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(alertDialog.isShowing()) {
+            alertDialog.dismiss();
+        }
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.connect_to_server_activity_button_connect:
+
+                if(!alertDialog.isShowing()) {
+                    alertDialog.show();
+                }
                 logd("Click connect_to_server_activity_button_connect");
                 new Handler().postDelayed(new Runnable() {
                     @Override
@@ -113,6 +129,16 @@ public class ConnectToServer extends AppCompatActivity implements View.OnClickLi
     public void connectTaskError(String e) {
         logd("connectTaskError()");
 
+    }
+
+    private AlertDialog getAlertDialog() {
+        AlertDialog.Builder builder;
+        AlertDialog alertDialog;
+        builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+        builder.setMessage("Transferring data");
+        alertDialog = builder.create();
+        return alertDialog;
     }
 
 }

@@ -62,18 +62,21 @@ public class MultiFileReceiverTask extends AsyncTask {
 
             metaMetaData = (MetaMetaData)objectInputStream.readObject();
 
-            int numberOfFiles = metaMetaData.getNumberOfFiles();
-            Log.d(MultiFileReceiverTask.TAG,"Number of files to receive = :" + numberOfFiles);
+            int numberOfForms = metaMetaData.getNumberOfFiles();
+            logd("Number of forms to receive = " + numberOfForms);
 
-            for(int i = 0 ;i< numberOfFiles ;i++) {
+
+
+            for(int i = 0; i < numberOfForms; i++) {
                 metaData = (MetaData)objectInputStream.readObject();
-                Log.d(MultiFileReceiverTask.TAG," Variable value received : " + metaData.toString() );
-                //objectInputStream.close();
-                Log.d(MultiFileReceiverTask.TAG,"Trying to recevie file :" + i);
+
 
                 //Make directory for form...
-                String formDirectoryPath = String.valueOf(Environment.getExternalStorageDirectory()) + Constants.RECEIVED_FORM_SAVE_PATH + metaData.getFname();
-                formDirectoryPath  = formDirectoryPath.substring(0,formDirectoryPath.length() - 4);
+                String formDirectoryPath = String.valueOf(Environment.getExternalStorageDirectory()) +"/"+ Constants.RECEIVED_FORM_SAVE_PATH +"/"+ metaData.getDirectoryName();
+
+                logd("Form directory name : "  + formDirectoryPath);
+
+                //formDirectoryPath  = formDirectoryPath.substring(0,formDirectoryPath.length() - 4);
                 File dir = new File(formDirectoryPath);
 
                 if(!dir.exists()) {
@@ -89,60 +92,71 @@ public class MultiFileReceiverTask extends AsyncTask {
                 }
 
 
-                String receivePath = formDirectoryPath +"/" + metaData.getFname();
-
-                File file = new File(receivePath);
-                if(!file.exists()) {
-                    Log.d(MultiFileReceiverTask.TAG, "File does not exist : " + receivePath);
-                }  else {
-                    Log.d(MultiFileReceiverTask.TAG,"File already exists : " + receivePath);
-                }
-
-                OutputStream outputStreamWriteToFile = new FileOutputStream(file);
-                Log.d(MultiFileReceiverTask.TAG,"outputStreamWriteToFile created");
-
-                int read;
-                long totalRead = 0;
-                long toRead = metaData.getDataSize();
-                int loop = 0;
-                if(! SocketHolder.getSocket().isConnected()) {
-                    Log.d(MultiFileReceiverTask.TAG,"Socket is closed... Can't perform file receiving from stream...");
-                    return null;
-                }
-                byte[] buffer;
-
-                if(toRead > 1024 )
-                {
-                    buffer = new byte[1024];
-                } else {
-                    buffer = new byte[(int) toRead];
-                }
+                Log.d(MultiFileReceiverTask.TAG," Variable value received : " + metaData.toString() );
+                //objectInputStream.close();
+                Log.d(MultiFileReceiverTask.TAG,"Trying to recevie file :" + i);
 
 
-                while ((read = inputStream.read(buffer)) != -1) {
+                int numberOfFiles = metaData.getNumberOfFiles();
+                logd("number of files " + numberOfFiles );
 
-                    totalRead = totalRead + read;
-                    outputStreamWriteToFile.write(buffer,0,read);
-                    loop++;
+                for (int fileNumber = 0; fileNumber < numberOfFiles ; fileNumber ++) {
+                    String receivePath = formDirectoryPath +"/" + metaData.getFname(fileNumber);
+
+                    File file = new File(receivePath);
+                    if(!file.exists()) {
+                        Log.d(MultiFileReceiverTask.TAG, "File does not exist : " + receivePath);
+                    }  else {
+                        Log.d(MultiFileReceiverTask.TAG,"File already exists : " + receivePath);
+                    }
+
+                    OutputStream outputStreamWriteToFile = new FileOutputStream(file);
+                    Log.d(MultiFileReceiverTask.TAG,"outputStreamWriteToFile created");
+
+                    int read;
+                    long totalRead = 0;
+                    long toRead = metaData.getDataSize(fileNumber);
+                    int loop = 0;
+                    if(! SocketHolder.getSocket().isConnected()) {
+                        Log.d(MultiFileReceiverTask.TAG,"Socket is closed... Can't perform file receiving from stream...");
+                        return null;
+                    }
+                    byte[] buffer;
+
+                    if(toRead > 1024 )
+                    {
+                        buffer = new byte[1024];
+                    } else {
+                        buffer = new byte[(int) toRead];
+                    }
+
+
+                    while ((read = inputStream.read(buffer)) != -1) {
+
+                        totalRead = totalRead + read;
+                        outputStreamWriteToFile.write(buffer,0,read);
+                        loop++;
+                        Log.d(MultiFileReceiverTask.TAG,"loop iterations : " + loop + " bytes read: " + totalRead);
+                        if(totalRead % 1024 == 0) {
+                            taskUpdate.TaskProgressPublish(metaData.getFname(fileNumber) + String.valueOf((float)totalRead/toRead*100) + "%");
+                        }
+
+                        if((toRead - totalRead) < 1024) {
+                            buffer = new byte[(int) (toRead-totalRead)];
+                        }
+                        //This the most important part...
+                        if(totalRead == metaData.getDataSize(fileNumber)) {
+                            Log.d(MultiFileReceiverTask.TAG,"breaking from loop");
+                            break;
+                        }
+                    }
+
                     Log.d(MultiFileReceiverTask.TAG,"loop iterations : " + loop + " bytes read: " + totalRead);
-                    if(totalRead % 1024 == 0) {
-                        taskUpdate.TaskProgressPublish(metaData.getFname() + String.valueOf((float)totalRead/toRead*100) + "%");
-                    }
-
-                    if((toRead - totalRead) < 1024) {
-                        buffer = new byte[(int) (toRead-totalRead)];
-                    }
-                    //This the most important part...
-                    if(totalRead == metaData.getDataSize()) {
-                        Log.d(MultiFileReceiverTask.TAG,"breaking from loop");
-                        break;
-                    }
+                    Log.d(MultiFileReceiverTask.TAG,"outputStreamWriteToFile closing");
+                    outputStreamWriteToFile.close();
+                    Log.d(MultiFileReceiverTask.TAG,"outputStreamWriteToFile closed");
                 }
 
-                Log.d(MultiFileReceiverTask.TAG,"loop iterations : " + loop + " bytes read: " + totalRead);
-                Log.d(MultiFileReceiverTask.TAG,"outputStreamWriteToFile closing");
-                outputStreamWriteToFile.close();
-                Log.d(MultiFileReceiverTask.TAG,"outputStreamWriteToFile closed");
             }
 
 
@@ -168,12 +182,19 @@ public class MultiFileReceiverTask extends AsyncTask {
         super.onPostExecute(o);
         taskUpdate.TaskCompleted(this.getClass().getSimpleName()+": Completed");
         if(SocketHolder.getSocket().isConnected()) {
-            Log.d(MultiFileReceiverTask.TAG,"BluetoothSocket is connected");
+            Log.d(MultiFileReceiverTask.TAG,"Socket is connected");
 
         } else {
-            Log.d(MultiFileReceiverTask.TAG,"BluetoothSocket is ****NOT*** connected");
+            Log.d(MultiFileReceiverTask.TAG,"Socket is ****NOT*** connected");
         }
         Log.d(MultiFileReceiverTask.TAG,"Task execution completed");
 
+    }
+
+    private void logd(String message) {
+        if(message == null) {
+            message = "";
+        }
+        Log.d(MultiFileReceiverTask.TAG,message);
     }
 }

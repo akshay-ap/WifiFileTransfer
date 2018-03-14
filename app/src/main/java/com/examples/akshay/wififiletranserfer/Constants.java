@@ -34,5 +34,5 @@ public class Constants {
     public static final String DATA_TRANSFER_DATA = "DATA_TRANSFER_DATA";
     public static final String  DATA_TRANSFER_SOCKET = "DATA_TRANSFER_SOCKET";
     public static final int DISCOVERABLE_DURATION = 120;
-    public static final String RECEIVED_FORM_SAVE_PATH = "/odk/instances/";
+    public static final String RECEIVED_FORM_SAVE_PATH = "odk/instances";
 }

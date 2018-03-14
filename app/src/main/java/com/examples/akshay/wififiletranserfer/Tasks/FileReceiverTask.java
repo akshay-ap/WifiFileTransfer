@@ -59,7 +59,7 @@ public class FileReceiverTask extends AsyncTask {
             Log.d(FileReceiverTask.TAG," Variable value received : " + metaData.toString() );
             //objectInputStream.close();
 
-            String receivePath = String.valueOf(Environment.getExternalStorageDirectory()) +"/"+ metaData.getFname();
+            String receivePath = String.valueOf(Environment.getExternalStorageDirectory()) +"/"+ metaData.getFname(0);
 
             File file = new File(receivePath);
             if(!file.exists()) {
@@ -74,7 +74,7 @@ public class FileReceiverTask extends AsyncTask {
             byte[] buffer = new byte[1024];
             int read;
             long totalRead = 0;
-            long toRead = metaData.getDataSize();
+            long toRead = metaData.getDataSize(0);
             int loop = 0;
             if(! SocketHolder.getSocket().isConnected()) {
                 Log.d(FileReceiverTask.TAG,"Socket is closed... Can't perform file receiving from stream...");
@@ -87,11 +87,11 @@ public class FileReceiverTask extends AsyncTask {
                 loop++;
                 //Log.d(FileReceiverTask.TAG,"loop iterations : " + loop + " bytes read: " + totalRead);
                 if(totalRead % 1024 == 0) {
-                    taskUpdate.TaskProgressPublish(metaData.getFname() + String.valueOf((float)totalRead/toRead*100) + "%");
+                    taskUpdate.TaskProgressPublish(metaData.getFname(0) + String.valueOf((float)totalRead/toRead*100) + "%");
                 }
 
                 //This the most important part...
-                if(totalRead == metaData.getDataSize()) {
+                if(totalRead == metaData.getDataSize(0)) {
                     Log.d(FileReceiverTask.TAG,"breaking from loop");
                     break;
                 }
@@ -119,7 +119,7 @@ public class FileReceiverTask extends AsyncTask {
     @Override
     protected void onPostExecute(Object o) {
         super.onPostExecute(o);
-        taskUpdate.TaskCompleted(metaData.getFname());
+        taskUpdate.TaskCompleted(metaData.getFname(0));
         if(SocketHolder.getSocket().isConnected()) {
             Log.d(FileReceiverTask.TAG,"BluetoothSocket is connected");
 

@@ -1,6 +1,5 @@
 package com.examples.akshay.wififiletranserfer.Tasks;
 
-import android.bluetooth.BluetoothSocket;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -71,53 +70,72 @@ public class MultiFileSenderTask extends AsyncTask {
 
             Log.d(MultiFileSenderTask.TAG,"Number of files to send :" + metaMetaData.getNumberOfFiles());
 
-            for(int i =0 ;i <metaMetaData.getNumberOfFiles();i++) {
-                String filePath = arrayListFormPaths.get(i);
+            for(int i =0 ;i < metaMetaData.getNumberOfFiles();i++) {
+                String xmlFilePath = arrayListFormPaths.get(i);
                 Log.d(MultiFileSenderTask.TAG,"Trying to send file number :" + i);
 
-                Log.d(MultiFileSenderTask.TAG,"obtain file object for : "+ filePath);
-                File file = new File(filePath);
+                Log.d(MultiFileSenderTask.TAG,"obtain file object for : "+ xmlFilePath);
+                File xmlFile = new File(xmlFilePath);
 
-                if(!file.exists()) {
+                if(!xmlFile.exists()) {
                     Log.d(MultiFileSenderTask.TAG,"File does not exist");
-                    taskUpdate.TaskError("File does not exist : " + filePath);
+                    taskUpdate.TaskError("File does not exist : " + xmlFilePath);
 
                     return null ;
                 } else {
                     Log.d(MultiFileSenderTask.TAG,"File exists");
                 }
 
+                File parentDirectory = new File(xmlFile.getParent());
+                Log.d(MultiFileSenderTask.TAG,"Parent directory path : " + parentDirectory);
 
-                metaData = new MetaData(file.length(),file.getName());
+                File[] files = parentDirectory.listFiles();
+
+                metaData = new MetaData(parentDirectory.getName(),files.length);
+
+                Log.d(MultiFileSenderTask.TAG,"No of files with the form " + "Size: "+ files.length);
+                for (int j = 0; j < files.length; j++)
+                {
+                    metaData.addFileMetaData(j,files[j].length(),files[j].getName());
+                    Log.d("Files", "FileName:" + files[j].getName());
+                }
+
+
+
+
                 Log.d(MultiFileSenderTask.TAG,"Trying to send : " + metaData.toString());
                 objectOutputStream.writeObject(metaData);
 
-
-                if(!SocketHolder.getSocket().isConnected()) {
-                    Log.d(MultiFileSenderTask.TAG,"Socket is closed... Can't perform file sending on stream...");
-                    return null;
-                }
-
-                Log.d(MultiFileSenderTask.TAG,"fileInputStream open: "+ filePath);
-                FileInputStream fileInputStream = new FileInputStream(file);
-
-                int bytesRead = 0;
-                byte[] buffer = new byte[1024];
-                int loop = 0;
-                long totalRead = 0;
-                long toRead = metaData.getDataSize();
-                while ((bytesRead = fileInputStream.read(buffer)) > 0)
-                {
-                    loop++;
-                    outputStream.write(buffer, 0, bytesRead);
-                    totalRead = totalRead + bytesRead;
-                    if(totalRead % 1024 == 0) {
-                        taskUpdate.TaskProgressPublish(metaData.getFname() + String.valueOf((float)totalRead/toRead*100) + "%");
+                //Turn this in loop
+                for (int formFileNumber =0; formFileNumber < metaData.getNumberOfFiles(); formFileNumber++ ) {
+                    if(!SocketHolder.getSocket().isConnected()) {
+                        Log.d(MultiFileSenderTask.TAG,"Socket is closed... Can't perform file sending on stream...");
+                        return null;
                     }
+                    String filePath = parentDirectory +"/"+ metaData.getFname(formFileNumber);
+                    Log.d(MultiFileSenderTask.TAG,"fileInputStream open: "+ filePath);
+                    File file = new File(filePath);
+                    FileInputStream fileInputStream = new FileInputStream(file);
+
+                    int bytesRead = 0;
+                    byte[] buffer = new byte[1024];
+                    int loop = 0;
+                    long totalRead = 0;
+                    long toRead = metaData.getDataSize(formFileNumber);
+                    while ((bytesRead = fileInputStream.read(buffer)) > 0)
+                    {
+                        loop++;
+                        outputStream.write(buffer, 0, bytesRead);
+                        totalRead = totalRead + bytesRead;
+                        if(totalRead % 1024 == 0) {
+                            taskUpdate.TaskProgressPublish(metaData.getFname(formFileNumber) + String.valueOf((float)totalRead/toRead*100) + "%");
+                        }
+                    }
+                    Log.d(MultiFileSenderTask.TAG,"Loop iterations run : " + loop);
+                    Log.d(MultiFileSenderTask.TAG,"trying to close the fileInputStream...");
+                    fileInputStream.close();
                 }
-                Log.d(MultiFileSenderTask.TAG,"Loop iterations run : " + loop);
-                Log.d(MultiFileSenderTask.TAG,"trying to close the fileInputStream...");
-                fileInputStream.close();
+
             }
 
 
@@ -139,10 +157,10 @@ public class MultiFileSenderTask extends AsyncTask {
         taskUpdate.TaskCompleted(this.getClass().getSimpleName()+": Completed");
 
         if(SocketHolder.getSocket().isConnected()) {
-            Log.d(MultiFileSenderTask.TAG,"BluetoothSocket is connected");
+            Log.d(MultiFileSenderTask.TAG,"Socket is connected");
 
         } else {
-            Log.d(MultiFileSenderTask.TAG,"BluetoothSocket is ****NOT*** connected");
+            Log.d(MultiFileSenderTask.TAG,"Socket is ****NOT*** connected");
         }
 
         Log.d(MultiFileSenderTask.TAG,"Task execution completed");

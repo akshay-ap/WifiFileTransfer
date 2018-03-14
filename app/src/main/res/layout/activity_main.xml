@@ -36,11 +36,13 @@
         android:layout_height="20dp" />
 
     <TextView
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/method_2"/>
     
     <Button
+        android:visibility="gone"
         android:id="@+id/main_activity_button_use_nsd"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

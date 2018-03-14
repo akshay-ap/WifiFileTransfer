@@ -17,7 +17,9 @@ public class MetaMetaData implements Serializable {
     public int getNumberOfFiles() {
         return numberOfFiles;
     }
-
+    public int getNumberOfForms() {
+        return  numberOfFiles;
+    }
     public void setNumberOfFiles(int numberOfFiles) {
         this.numberOfFiles = numberOfFiles;
     }

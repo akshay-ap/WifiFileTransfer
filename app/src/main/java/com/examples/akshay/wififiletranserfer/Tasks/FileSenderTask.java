@@ -73,7 +73,7 @@ public class FileSenderTask extends AsyncTask {
             ObjectOutputStream objectOutputStream;
             objectOutputStream = new ObjectOutputStream(outputStream);
 
-            metaData = new MetaData(file.length(),file.getName());
+            metaData = new MetaData(file.getParent(),1);
             Log.d(FileSenderTask.TAG,"Trying to send : " + metaData.toString());
             objectOutputStream.writeObject(metaData);
 
@@ -90,14 +90,14 @@ public class FileSenderTask extends AsyncTask {
             byte[] buffer = new byte[1024];
             int loop = 0;
             long totalRead = 0;
-            long toRead = metaData.getDataSize();
+            long toRead = metaData.getDataSize(0);
             while ((bytesRead = fileInputStream.read(buffer)) > 0)
             {
                 loop++;
                 outputStream.write(buffer, 0, bytesRead);
                 totalRead = totalRead + bytesRead;
                 if(totalRead % 1024 == 0) {
-                    taskUpdate.TaskProgressPublish(metaData.getFname() + String.valueOf((float)totalRead/toRead*100) + "%");
+                    taskUpdate.TaskProgressPublish(metaData.getFname(0) + String.valueOf((float)totalRead/toRead*100) + "%");
                 }
             }
 
@@ -120,7 +120,7 @@ public class FileSenderTask extends AsyncTask {
     @Override
     protected void onPostExecute(Object o) {
         super.onPostExecute(o);
-        taskUpdate.TaskCompleted(metaData.getFname());
+        taskUpdate.TaskCompleted(metaData.getFname(0));
 
         if(SocketHolder.getSocket().isConnected()) {
             Log.d(FileSenderTask.TAG,"BluetoothSocket is connected");
