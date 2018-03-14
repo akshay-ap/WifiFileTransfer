@@ -74,7 +74,7 @@ public class AcceptConnectionTask extends AsyncTask {
 
             logd("trying to accept connection");
             Socket client = serverSocket.accept();
-            SocketHolder.socket = client;
+            SocketHolder.setSocket(client);
             acceptConnectionTaskUpdate.StartDataTransfer();
             logd("Accepted connection");
 

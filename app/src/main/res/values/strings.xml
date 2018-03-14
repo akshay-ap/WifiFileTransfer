@@ -20,4 +20,9 @@
     <string name="method_2">Method 2</string>
     <string name="connect">Connect</string>
     <string name="test">test</string>
+    <string name="unknown">unknown</string>
+    <string name="receive">RECEIVE</string>
+    <string name="send">SEND</string>
+    <string name="receive_forms">RECEIVE FORM</string>
+    <string name="send_forms">SEND FORMS</string>
 </resources>

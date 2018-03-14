@@ -27,6 +27,8 @@
         <activity android:name=".activities.DataTransfer" />
         <activity android:name=".activities.ShowQRCode" />
         <activity android:name=".activities.ConnectToServer"></activity>
+        <activity android:name=".activities.CollectSend"></activity>
+
     </application>
 
 </manifest>
