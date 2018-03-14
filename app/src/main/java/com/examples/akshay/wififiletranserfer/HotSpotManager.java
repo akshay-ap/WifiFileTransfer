@@ -29,9 +29,9 @@ public class HotSpotManager {
     }
     public void createHotSpot() {
 
-        if(HotSpotManager.isApOn(context)) {
+/*        if(HotSpotManager.isApOn(context)) {
             HotSpotManager.configApState(context);
-        }
+        }*/
 
         o = new Message();
         o.obj = Constants.HOTSPOT_CREATION_STARTED;

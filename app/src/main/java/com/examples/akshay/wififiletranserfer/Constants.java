@@ -17,10 +17,16 @@ public class Constants {
     //public static final String INSTANCE_NAME= "_wifi_file";
     //public static final String SERVICE_TYPE = "_presence._tcp";
 
+    //milli seconds
+    public static final int HOTSPOT_TURN_OFF_WAIT_PERIOD = 3000;
+
     public static final int HOTSPOT_CREATION_STARTED = 1;
     public static final int HOTSPOT_CREATION_SUCCESS = 2;
     public static final int HOTSPOT_CREATION_FAILED = 3;
+    public static final int HOTSPOT_TURN_OFF_REQUEST = 4;
+    public static final int HOTSPOT_TURN_OFF_FAILED = 5;
+    public static final int HOTSPOT_TURN_OFF_SUCCESS = 6;
 
-    public static final int WIFI_CONNECTION_SUCCESS = 4;
-    public static final int WIFI_CONNECTION_FAILURE = 5;
+    public static final int WIFI_CONNECTION_SUCCESS = 7;
+    public static final int WIFI_CONNECTION_FAILURE = 8;
 }

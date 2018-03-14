@@ -155,10 +155,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.main_activity_button_generate_qrcode:
 
+
                 Log.d(MainActivity.TAG,"main_activity_button_create_hotspot CLICK");
                 hotspotCreationThread = new Thread(new Runnable() {
                     @Override
                     public void run() {
+                        Message message;
+                        if(HotSpotManager.isApOn(MainActivity.this)) {
+                            HotSpotManager.configApState(MainActivity.this);
+                            try {
+                                message = new Message();
+                                message.obj = Constants.HOTSPOT_TURN_OFF_REQUEST;
+                                mHandler.sendMessage(message);
+                                Thread.sleep(Constants.HOTSPOT_TURN_OFF_WAIT_PERIOD);
+                                message = new Message();
+                                message.obj = Constants.HOTSPOT_TURN_OFF_SUCCESS;
+                                mHandler.sendMessage(message);
+                            } catch (InterruptedException e) {
+                                message = new Message();
+                                message.obj = Constants.HOTSPOT_TURN_OFF_FAILED;
+                                mHandler.sendMessage(message);
+                                e.printStackTrace();
+                                logd(e.toString());
+                            }
+                        }
                         hotSpotManager.createHotSpot();
                     }
                 });
@@ -352,6 +372,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     case Constants.WIFI_CONNECTION_FAILURE:
                         logd("Connection to hotspot failed");
                         makeToast("Try again..connection attempt failed");
+                        break;
+
+                    case Constants.HOTSPOT_TURN_OFF_FAILED:
+                        if(alertDialog.isShowing()) {
+                            alertDialog.dismiss();
+                            makeToast("Hotspot termination failed");
+                        }
+                        break;
+                    case Constants.HOTSPOT_TURN_OFF_REQUEST:
+                        if(!alertDialog.isShowing()) {
+                            alertDialog.show();
+                        }
+                        break;
+                    case Constants.HOTSPOT_TURN_OFF_SUCCESS:
+                        if(alertDialog.isShowing()) {
+                            alertDialog.dismiss();
+                        }
                         break;
                     default:
                         makeToast("Unhandled message" + status);
